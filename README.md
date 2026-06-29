@@ -8,9 +8,6 @@ It's both a **Claude Code / agent skill** (drop a banner in chat and ask "will t
 pass Amazon DSP?") and a plain **command-line tool**. The validation engine is the
 same one behind Viewst's banner-validator web app: same ruleset, same checks.
 
-> **AI agents:** start with [`llms.txt`](llms.txt) — a concise, link-first guide to
-> installing this skill and using it to check and optimize banners.
-
 ```text
 $ python3 validate.py creative.zip --network amazon_2dsp
 Banner: creative.zip (zip, 198 KB zipped, 240 KB raw)
