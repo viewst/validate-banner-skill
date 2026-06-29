@@ -1,0 +1,19 @@
+{
+  "name": "viewst",
+  "owner": {
+    "name": "Viewst",
+    "url": "https://viewst.com"
+  },
+  "plugins": [
+    {
+      "name": "validate-banner",
+      "source": "./",
+      "description": "Validate HTML5 banners against ad-network requirements (Google Ads, Amazon DSP, Yandex, and 25+ DSPs) and auto-fix non-whitelisted external URLs + oversized images.",
+      "version": "1.0.0",
+      "homepage": "https://github.com/viewst/validate-banner-skill",
+      "author": {
+        "name": "Viewst"
+      }
+    }
+  ]
+}

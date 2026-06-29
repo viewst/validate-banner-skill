@@ -1,0 +1,704 @@
+[
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "default",
+    "label": "Default / Custom",
+    "group": "other",
+    "notes": "Generic HTML5 banner with a standard clickTag. No vendor script required."
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "google_ads",
+    "label": "Google Ads",
+    "group": "google",
+    "notes": "Standard clickTag. GSAP is bundled (internal) rather than via CDN."
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "google_campaign_manager",
+    "label": "Google Campaign Manager",
+    "group": "google"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "google_video_360",
+    "label": "Google Display & Video 360",
+    "group": "google"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "none",
+      "signature": {
+        "__regex__": {
+          "source": "yandexHTML5BannerApi\\.getClick(URL)?Num\\s*\\(\\s*1\\s*\\)",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Wire the click via Yandex: `document.getElementById(\"bannerClick\").href = yandexHTML5BannerApi.getClickURLNum(1);`"
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": true,
+    "id": "yandex.direct",
+    "label": "Yandex Direct",
+    "group": "yandex",
+    "hidden": true,
+    "notes": "Yandex supplies the click URL through yandexHTML5BannerApi; no clickTag."
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "none",
+      "signature": {
+        "__regex__": {
+          "source": "yandexHTML5BannerApi\\.getClick(URL)?Num\\s*\\(\\s*1\\s*\\)",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Wire the click via Yandex: `document.getElementById(\"bannerClick\").href = yandexHTML5BannerApi.getClickURLNum(1);`"
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": true,
+    "id": "yandex.display",
+    "label": "Yandex Display",
+    "group": "yandex",
+    "hidden": true,
+    "notes": "Yandex supplies the click URL through yandexHTML5BannerApi; no clickTag."
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "macro",
+      "signature": {
+        "__regex__": {
+          "source": "%link1%",
+          "flags": ""
+        }
+      },
+      "suggestion": "Use the myTarget click macro `%link1%` as the banner href."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "mytarget",
+    "label": "myTarget",
+    "group": "russian",
+    "hidden": true
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "macro",
+      "signature": {
+        "__regex__": {
+          "source": "%clickurl(s|_1)%",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Set the href to the Rambler macro `%clickurl_1%`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "rambler",
+    "label": "Rambler",
+    "group": "russian",
+    "hidden": true
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "macro",
+      "signature": {
+        "__regex__": {
+          "source": "\\[\\[CLICK_PREFIX\\]\\]",
+          "flags": ""
+        }
+      },
+      "suggestion": "Prefix the href with the GetIntent macro `[[CLICK_PREFIX]]`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "getintent",
+    "label": "GetIntent",
+    "group": "russian",
+    "hidden": true
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "yastatic.net/pcode/adfox/loader.js"
+    ],
+    "click": {
+      "family": "macro",
+      "signature": {
+        "__regex__": {
+          "source": "%banner\\.reference_user\\d+%",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Set the href to the AdFox macro `%banner.reference_user1%` and target `%banner.target%`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "adfox",
+    "label": "AdFox",
+    "group": "russian",
+    "hidden": true
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "content.adriver.ru/html.js"
+    ],
+    "click": {
+      "family": "sdk",
+      "signature": {
+        "__regex__": {
+          "source": "ar_callLink\\s*\\(",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Use AdRiver: `ar_callLink({ target: \"_blank\" })` in the click handler."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "adriver",
+    "label": "AdRiver",
+    "group": "russian",
+    "hidden": true
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "content.adriver.ru/html.js"
+    ],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "adcrowd",
+    "label": "AdCrowd",
+    "group": "russian",
+    "hidden": true
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "ns.sascdn.com/diff/templates/js/banner/sas-clicktag-3.1.js"
+    ],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "smartadserver",
+    "label": "Smart AdServer",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "verizon",
+    "label": "Verizon",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "adroll",
+    "label": "AdRoll",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "acdn.adnxs.com/html5-lib/1.3.0/appnexus-html5-lib.min.js"
+    ],
+    "click": {
+      "family": "sdk",
+      "signature": {
+        "__regex__": {
+          "source": "APPNEXUS\\.getClickTag\\s*\\(|var\\s+clickTag\\s*=",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Open `APPNEXUS.getClickTag()` on click after including the AppNexus HTML5 library."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "xandr",
+    "label": "Xandr (AppNexus)",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "adsby.bidtheatre.com/js/asxhtml5.min.js"
+    ],
+    "click": {
+      "family": "sdk",
+      "signature": {
+        "__regex__": {
+          "source": "asxhtml5\\.getParam\\s*\\(",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Resolve the click via `asxhtml5.getParam(\"clickTag\", \"https://www.advertiser.com\")`."
+    },
+    "specialFiles": [
+      {
+        "name": "manifest.json",
+        "required": true,
+        "note": "BidTheatre requires a manifest.json: {\"width\":W,\"height\":H,\"source\":\"index.html\",\"name\":\"...\"}."
+      }
+    ],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "bidtheatre",
+    "label": "BidTheatre",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "queryparam",
+      "signature": {
+        "__regex__": {
+          "source": "getParameterByName\\s*\\(\\s*[\"']clickTAG",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Read `getParameterByName(\"clickTAG\")` and open it on click."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "choozle",
+    "label": "Choozle",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "sting.de17a.com/html5.js"
+    ],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "delta_projects",
+    "label": "Delta Projects",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "serving-sys-int.com/BurstingScript/EBLoader.js"
+    ],
+    "click": {
+      "family": "queryparam",
+      "signature": {
+        "__regex__": {
+          "source": "getParameterByName\\s*\\(|getUriParams",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Read the click macro from the URL via a `getParameterByName(\"clickTag\")` helper rather than hard-coding it."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "sizmek",
+    "label": "Sizmek",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "queryparam",
+      "signature": {
+        "__regex__": {
+          "source": "getUriParams|getParameterByName",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Read the click macro from the URL via a `getParameterByName(\"clickTag\")` helper rather than hard-coding it."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "stroer",
+    "label": "Ströer Digital Group",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 204800,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "queryparam",
+      "signature": {
+        "__regex__": {
+          "source": "getParameterByName\\s*\\(\\s*[\"']clickTAG",
+          "flags": ""
+        }
+      },
+      "suggestion": "Read `getParameterByName(\"clickTAG\")` (capital TAG) and open it on click."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "trade_desk",
+    "label": "The Trade Desk",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "yahoo_ad_tech",
+    "label": "Yahoo Ad Tech",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 153600,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "xandr_invest",
+    "label": "Xandr Invest",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 460800,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "quantcast",
+    "label": "Quantcast",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 2097152,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "allow"
+    },
+    "disableClickUrlChange": false,
+    "id": "beeswax",
+    "label": "Beeswax",
+    "group": "dsp"
+  },
+  {
+    "sizeLimitBytes": 204800,
+    "requireMetaAdSize": true,
+    "requiredScripts": [],
+    "click": {
+      "family": "standard",
+      "signature": {
+        "__regex__": {
+          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "flags": "i"
+        }
+      },
+      "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "specialFiles": [],
+    "externalUrls": {
+      "mode": "whitelist",
+      "allow": [
+        "adkit-advertising.amazon",
+        "amazon-adsystem.com",
+        "amazon.com",
+        "greensock.com"
+      ]
+    },
+    "disableClickUrlChange": false,
+    "id": "amazon_dsp",
+    "label": "Amazon DSP",
+    "group": "amazon",
+    "hidden": true,
+    "notes": "Amazon DSP rejects any reference to a non-Amazon external host. Inline/bundle every asset."
+  },
+  {
+    "sizeLimitBytes": 204800,
+    "requireMetaAdSize": true,
+    "requiredScripts": [
+      "adkit-advertising.amazon/sdk/SDKLoader.js"
+    ],
+    "click": {
+      "family": "sdk",
+      "signature": {
+        "__regex__": {
+          "source": "SDK\\.clickThrough",
+          "flags": ""
+        }
+      },
+      "suggestion": "Wire the click through the Amazon SDK: `document.getElementById(\"bannerClick\").onclick = SDK.clickThrough;`"
+    },
+    "specialFiles": [
+      {
+        "name": "index.js",
+        "required": true,
+        "note": "Amazon DSP 2.0 expects an index.js file alongside index.html (may be empty)."
+      }
+    ],
+    "externalUrls": {
+      "mode": "whitelist",
+      "allow": [
+        "adkit-advertising.amazon",
+        "amazon-adsystem.com",
+        "amazon.com",
+        "greensock.com"
+      ],
+      "sdkRequired": "adkit-advertising.amazon/sdk/SDKLoader.js"
+    },
+    "disableClickUrlChange": false,
+    "id": "amazon_2dsp",
+    "label": "Amazon DSP (2.0)",
+    "group": "amazon",
+    "notes": "Strictest network: SDK loader required, all assets bundled, no external (non-Amazon) URLs."
+  }
+]

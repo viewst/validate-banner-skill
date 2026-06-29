@@ -1,0 +1,4 @@
+# OPTIONAL. Validation and the URL-strip --fix need NOTHING beyond the Python
+# standard library. Pillow is required ONLY for the --fix image-compression step;
+# without it, --fix still strips external URLs and tells you compression was skipped.
+Pillow>=9.0

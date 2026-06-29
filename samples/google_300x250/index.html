@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="ad.size" content="width=300,height=250" />
+    <title>Spring Sale 300x250</title>
+    <style>
+      * { margin: 0; box-sizing: border-box; }
+      #container {
+        width: 300px; height: 250px; overflow: hidden; position: relative;
+        font-family: -apple-system, system-ui, sans-serif;
+        background: linear-gradient(135deg, #0074e8, #012966); color: #fff;
+      }
+      .pad { padding: 24px; }
+      h1 { font-size: 30px; line-height: 1.05; letter-spacing: -0.02em; }
+      p { margin-top: 8px; opacity: 0.85; font-size: 14px; }
+      .cta {
+        position: absolute; left: 24px; bottom: 24px;
+        background: #fff; color: #012966; font-weight: 600;
+        padding: 10px 18px; border-radius: 8px; font-size: 14px;
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes pulse { 50% { transform: scale(1.05); } }
+    </style>
+  </head>
+  <body>
+    <a id="bannerClick" href="#" style="text-decoration: none">
+      <div id="container">
+        <div class="pad">
+          <h1>Spring<br />Sale</h1>
+          <p>Up to 40% off everything</p>
+        </div>
+        <span class="cta">Shop now →</span>
+      </div>
+    </a>
+    <script>
+      var clickTag = "https://example.com/spring-sale";
+      document.getElementById("bannerClick").onclick = function (e) {
+        e.preventDefault();
+        window.open(window.clickTag, "_blank");
+      };
+    </script>
+  </body>
+</html>

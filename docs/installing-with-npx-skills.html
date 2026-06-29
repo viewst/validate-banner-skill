@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Installing skills with npx skills · validate-banner</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --panel-2: #1c2330; --border: #2a3340;
+    --ink: #e6edf3; --muted: #9aa7b4; --accent: #58a6ff; --accent-2: #7ee787;
+    --warn: #f0b429; --err: #ff7b72; --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 80% -10%, #15233b 0%, transparent 60%), var(--bg);
+    color: var(--ink); font-family: var(--sans); line-height: 1.6; font-size: 16px;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 56px 24px 96px; }
+  header.hero { margin-bottom: 40px; }
+  .kicker { color: var(--accent-2); font-family: var(--mono); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { font-size: 40px; line-height: 1.15; margin: 10px 0 12px; letter-spacing: -.02em; }
+  h2 { font-size: 24px; margin: 48px 0 14px; padding-top: 10px; border-top: 1px solid var(--border); letter-spacing: -.01em; }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: var(--ink); }
+  p { color: var(--ink); }
+  .lede { font-size: 19px; color: var(--muted); max-width: 70ch; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); font-size: .9em; background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; color: #cdd9e5; }
+  pre { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; overflow-x: auto; margin: 14px 0; }
+  pre code { background: none; border: 0; padding: 0; font-size: 13.5px; line-height: 1.7; color: #cdd9e5; }
+  .tok-cmd { color: var(--accent-2); } .tok-flag { color: var(--accent); } .tok-cmt { color: var(--muted); } .tok-path { color: var(--warn); }
+  .panel { background: linear-gradient(180deg, var(--panel) 0%, #12161d 100%); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; margin: 18px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14.5px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; }
+  td code { white-space: nowrap; }
+  .pill { display: inline-block; font-family: var(--mono); font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 18px 0; }
+  .steps > li { position: relative; padding: 4px 0 18px 52px; }
+  .steps > li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 0; width: 34px; height: 34px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--border); color: var(--accent); font-family: var(--mono); font-weight: 700; display: grid; place-items: center; }
+  .steps > li::after { content: ""; position: absolute; left: 17px; top: 36px; bottom: 0; width: 1px; background: var(--border); }
+  .steps > li:last-child::after { display: none; }
+  .note { border-left: 3px solid var(--accent); background: rgba(88,166,255,.08); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0; color: var(--ink); }
+  .note.warn { border-left-color: var(--warn); background: rgba(240,180,41,.08); }
+  .note.good { border-left-color: var(--accent-2); background: rgba(126,231,135,.08); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 680px) { .grid2 { grid-template-columns: 1fr; } h1 { font-size: 30px; } }
+  .tree { font-family: var(--mono); font-size: 13.5px; line-height: 1.7; color: #cdd9e5; }
+  .tree .dim { color: var(--muted); } .tree .hit { color: var(--accent-2); }
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+  .toc { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">validate-banner · install guide</div>
+    <h1>Installing skills with <code>npx&nbsp;skills</code></h1>
+    <p class="lede">How the open <code>skills</code> CLI turns a GitHub repo into an installed agent skill — and exactly how this repository is laid out so <code>npx skills add viewst/validate-banner-skill</code> just works.</p>
+    <nav class="toc">
+      <a href="#what">What it is</a>
+      <a href="#install">Install this skill</a>
+      <a href="#syntax">Command &amp; flags</a>
+      <a href="#discovery">How discovery works</a>
+      <a href="#structure">Repo structure</a>
+      <a href="#agents">Agents &amp; paths</a>
+      <a href="#reqs">Requirements</a>
+    </nav>
+  </header>
+
+  <section id="what">
+    <h2>What is <code>npx skills</code>?</h2>
+    <p><a href="https://github.com/vercel-labs/skills"><strong>vercel-labs/skills</strong></a> is an open, GitHub-backed package manager for <strong>agent skills</strong> — reusable instruction sets (a <code>SKILL.md</code> plus any supporting files) that extend AI coding agents. Think “npm, but the registry is GitHub and the packages are skills.” It supports Claude Code, Cursor, Codex, GitHub Copilot, Windsurf, OpenCode, and ~70 more agents from one command.</p>
+    <div class="note good">The installer needs Node/<code>npx</code>. The <strong>validate-banner skill itself runs on Python</strong> — so on a machine without Node you skip <code>npx</code> and install by plain copy instead (<a href="#install">option B below</a>).</div>
+  </section>
+
+  <section id="install">
+    <h2>Install this skill</h2>
+    <div class="grid2">
+      <div class="panel">
+        <h3>A · With <code>npx skills</code></h3>
+        <pre><code><span class="tok-cmd">npx</span> skills add viewst/validate-banner-skill</code></pre>
+        <p style="color:var(--muted);font-size:14px;margin:0">Auto-detects your installed agents and symlinks the skill into each. Add <code>--list</code> to preview, <code>-g</code> for a user-global install, <code>-a claude-code</code> to target one agent.</p>
+      </div>
+      <div class="panel">
+        <h3>B · Plain copy (no Node)</h3>
+        <pre><code><span class="tok-cmd">git</span> clone https://github.com/viewst/validate-banner-skill.git
+<span class="tok-cmd">cp</span> -R validate-banner-skill/skills/validate-banner \
+   <span class="tok-path">~/.claude/skills/</span></code></pre>
+        <p style="color:var(--muted);font-size:14px;margin:0">Works anywhere <code>python3</code> exists. Or run it directly: <code>python3 …/validate-banner/validate.py banner.zip</code>.</p>
+      </div>
+    </div>
+    <h3>C · As a Claude Code plugin</h3>
+    <pre><code><span class="tok-cmd">/plugin</span> marketplace add viewst/validate-banner-skill
+<span class="tok-cmd">/plugin</span> install validate-banner@viewst</code></pre>
+    <p style="color:var(--muted);font-size:14px">Uses the repo's <code>.claude-plugin/marketplace.json</code> + <code>plugin.json</code>.</p>
+  </section>
+
+  <section id="syntax">
+    <h2>Command &amp; flags</h2>
+    <pre><code><span class="tok-cmd">npx</span> skills add <span class="tok-path">&lt;source&gt;</span> <span class="tok-flag">[options]</span></code></pre>
+    <p>The <em>source</em> can be a GitHub shorthand, a full URL, a git URL, a deep link to one skill, or a local path:</p>
+    <pre><code><span class="tok-cmt"># all of these are valid sources</span>
+owner/repo
+https://github.com/owner/repo
+https://github.com/owner/repo/tree/main/skills/web-design
+git@github.com:owner/repo.git
+./my-local-skills</code></pre>
+    <table>
+      <thead><tr><th>Flag</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>-l, --list</code></td><td>List the skills a source provides without installing.</td></tr>
+        <tr><td><code>-s, --skill &lt;names…&gt;</code></td><td>Install only the named skills (use <code>'*'</code> for all).</td></tr>
+        <tr><td><code>-a, --agent &lt;agents…&gt;</code></td><td>Target specific agents, e.g. <code>claude-code</code>, <code>codex</code>, <code>cursor</code>.</td></tr>
+        <tr><td><code>-g, --global</code></td><td>Install to the user directory (<code>~/</code>) instead of the current project.</td></tr>
+        <tr><td><code>--copy</code></td><td>Copy files instead of symlinking (when symlinks aren't supported).</td></tr>
+        <tr><td><code>-y, --yes</code></td><td>Skip confirmation prompts.</td></tr>
+        <tr><td><code>--all</code></td><td>Install every skill to every detected agent, no prompts.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="discovery">
+    <h2>How discovery works</h2>
+    <p>After fetching the repo, the CLI walks it looking for skills — a directory is a skill if it contains a <code>SKILL.md</code> with <code>name</code> and <code>description</code> frontmatter. It searches these locations (about two levels deep):</p>
+    <ol class="steps">
+      <li><strong>Repo root</strong> — only if there's a <code>SKILL.md</code> there (a single-skill repo).</li>
+      <li><strong><code>skills/</code></strong> and its curated subfolders (<code>skills/.curated/</code>, <code>skills/.experimental/</code>, <code>skills/.system/</code>).</li>
+      <li><strong>Manifests</strong> — <code>.claude-plugin/marketplace.json</code> or <code>plugin.json</code>, which can declare skills at explicit paths.</li>
+      <li><strong>Agent dirs</strong> — e.g. <code>.claude/skills/</code>, <code>.agents/skills/</code>.</li>
+    </ol>
+    <div class="note warn"><strong>Why we don't put <code>SKILL.md</code> at the repo root:</strong> a root-level <code>SKILL.md</code> would make the <em>entire repository</em> the skill payload — your <code>README</code>, <code>LICENSE</code>, and tests would all be symlinked into <code>.claude/skills/</code>. Nesting the skill under <code>skills/validate-banner/</code> installs just that folder.</div>
+    <h3>Minimum a skill needs</h3>
+    <pre><code><span class="tok-cmt">--- (frontmatter, required) ---</span>
+name: validate-banner
+description: Validate an HTML5 banner against ad-network requirements…
+<span class="tok-cmt">--- (body: instructions for the agent) ---</span></code></pre>
+  </section>
+
+  <section id="structure">
+    <h2>How this repo is structured</h2>
+    <p>Laid out so the <code>skills/</code> walk finds exactly one skill and installs only its folder:</p>
+    <div class="panel tree">
+validate-banner-skill/<br />
+├── <span class="dim">README.md, LICENSE, NOTICE</span> &nbsp;<span class="dim"># repo-owned, never installed</span><br />
+├── .claude-plugin/<br />
+│&nbsp;&nbsp;&nbsp;├── marketplace.json &nbsp;<span class="dim"># enables /plugin marketplace add</span><br />
+│&nbsp;&nbsp;&nbsp;└── plugin.json<br />
+├── docs/installing-with-npx-skills.html &nbsp;<span class="dim"># this page</span><br />
+└── skills/<br />
+&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="hit">validate-banner/</span> &nbsp;<span class="dim"># ← the installed unit</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="hit">SKILL.md</span> &nbsp;<span class="dim"># name + description frontmatter</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── validate.py &nbsp;<span class="dim"># Python runner (entry)</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── bannerlib/ &nbsp;<span class="dim"># the engine (stdlib)</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── rules.json &nbsp;<span class="dim"># generated ruleset</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── validate.mjs &nbsp;<span class="dim"># Node fallback runner</span>
+    </div>
+    <div class="note">Because <code>validate.py</code> resolves <code>rules.json</code> and <code>bannerlib/</code> relative to its own file, it keeps working through the symlink the installer creates — no matter the current working directory.</div>
+  </section>
+
+  <section id="agents">
+    <h2>Agents &amp; install paths</h2>
+    <p>The CLI auto-detects installed agents and places skills in each agent's convention. It defaults to <strong>symlinks</strong> (one canonical copy, easy updates); <code>--copy</code> makes independent copies.</p>
+    <table>
+      <thead><tr><th>Agent</th><th><code>-a</code> value</th><th>Project path</th><th>Global (<code>-g</code>) path</th></tr></thead>
+      <tbody>
+        <tr><td>Claude Code</td><td><code>claude-code</code></td><td><code>.claude/skills/</code></td><td><code>~/.claude/skills/</code></td></tr>
+        <tr><td>Cursor</td><td><code>cursor</code></td><td><code>.agents/skills/</code></td><td><code>~/.cursor/skills/</code></td></tr>
+        <tr><td>Codex</td><td><code>codex</code></td><td><code>.agents/skills/</code></td><td><code>~/.codex/skills/</code></td></tr>
+        <tr><td>GitHub Copilot</td><td><code>github-copilot</code></td><td><code>.agents/skills/</code></td><td><code>~/.copilot/skills/</code></td></tr>
+        <tr><td>Windsurf</td><td><code>windsurf</code></td><td><code>.windsurf/skills/</code></td><td><code>~/.codeium/windsurf/skills/</code></td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--muted);font-size:14px">…and dozens more. Run <code>npx skills add &lt;repo&gt; --list</code> first to see what would be installed before committing to it.</p>
+  </section>
+
+  <section id="reqs">
+    <h2>Requirements at a glance</h2>
+    <table>
+      <thead><tr><th>To…</th><th>You need</th></tr></thead>
+      <tbody>
+        <tr><td>Install via <code>npx skills add</code></td><td><span class="pill">Node + npx</span> <span class="pill">git</span></td></tr>
+        <tr><td>Install via plain copy / clone</td><td><span class="pill">git (or a downloaded ZIP)</span></td></tr>
+        <tr><td><strong>Run</strong> the skill (validate + URL-strip fix)</td><td><span class="pill">Python ≥ 3.9 — nothing else</span></td></tr>
+        <tr><td><code>--fix</code> image compression</td><td><span class="pill">Python ≥ 3.9</span> <span class="pill">Pillow</span></td></tr>
+        <tr><td>Node fallback runner</td><td><span class="pill">Node ≥ 20</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Part of <a href="https://github.com/viewst/validate-banner-skill">viewst/validate-banner-skill</a> · Apache-2.0 © Viewst ·
+    <code>npx skills</code> is <a href="https://github.com/vercel-labs/skills">vercel-labs/skills</a>, an independent open-source project.
+  </footer>
+
+</div>
+</body>
+</html>

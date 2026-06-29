@@ -1,0 +1,13 @@
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# fix outputs / scratch
+*_fixed.zip
+*_fixed.html
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/

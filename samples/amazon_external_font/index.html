@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="ad.size" content="width=300,height=250" />
+    <!-- This external font link is exactly what Amazon DSP rejects. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet" />
+    <script src="https://adkit-advertising.amazon/sdk/SDKLoader.js"></script>
+    <style>
+      * { margin: 0; box-sizing: border-box; }
+      #container {
+        width: 300px; height: 250px; background: #131921; color: #fff;
+        font-family: "Inter", sans-serif; padding: 24px; position: relative;
+      }
+      h1 { font-size: 28px; }
+      .cta { position: absolute; left: 24px; bottom: 24px; background: #febd69; color: #131921; padding: 10px 18px; border-radius: 6px; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <a id="bannerClick">
+      <div id="container">
+        <h1>Prime Deals</h1>
+        <span class="cta">Add to cart</span>
+      </div>
+    </a>
+    <script>
+      var clickTag = '';
+      document.getElementById("bannerClick").onclick = SDK.clickThrough;
+    </script>
+  </body>
+</html>

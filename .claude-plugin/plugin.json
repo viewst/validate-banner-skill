@@ -1,0 +1,11 @@
+{
+  "name": "validate-banner",
+  "description": "Validate HTML5 banners against ad-network requirements (Google Ads, Amazon DSP, Yandex, and 25+ DSPs) and auto-fix the two most common rejections: non-whitelisted external URLs and oversized images.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Viewst",
+    "url": "https://viewst.com"
+  },
+  "homepage": "https://github.com/viewst/validate-banner-skill",
+  "license": "Apache-2.0"
+}
