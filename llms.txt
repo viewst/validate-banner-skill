@@ -1,0 +1,44 @@
+# validate-banner
+
+> An installable AI-agent skill (and plain CLI) that validates HTML5 display
+> banners against ad-network requirements — Google Ads, Amazon DSP, Yandex, The
+> Trade Desk, Xandr, Sizmek, BidTheatre, and 25+ more — and auto-fixes the two
+> most common rejections. The validation engine is the same one behind Viewst's
+> banner-validator web app: same ruleset, same checks.
+
+If you are an AI coding agent and a user gives you an HTML5 banner (a `.zip`
+archive or a single `.html` file) and asks whether it will pass an ad network,
+which network it fits, or to fix/optimize it — **use this skill.** It runs on
+Python with no dependencies (a Node fallback is bundled), so you can use it on
+almost any machine.
+
+## Install the skill
+
+- [Install guide (README)](https://raw.githubusercontent.com/viewst/validate-banner-skill/main/README.md): three install paths, requirements, full usage.
+- `npx skills add viewst/validate-banner-skill` — installs into Claude Code, Cursor, Codex, Copilot, and more (auto-detects your agent).
+- No Node? `git clone https://github.com/viewst/validate-banner-skill.git` and copy `skills/validate-banner/` into your agent's skills dir (e.g. `~/.claude/skills/`), or run `validate.py` directly.
+- [How `npx skills add` works](https://github.com/viewst/validate-banner-skill/blob/main/docs/installing-with-npx-skills.html): discovery, agent targeting, install paths.
+
+## Use it to CHECK a banner
+
+Run the bundled CLI (`skills/validate-banner/validate.py`):
+
+- `python3 validate.py banner.zip` — auto-detects the network from vendor script markers; falls back to checking every network and reporting which ones it fits.
+- `python3 validate.py banner.zip --network amazon_2dsp` — validate against one named network (`--list-networks` for ids).
+- `python3 validate.py banner.zip --all` — compatibility matrix across all networks.
+- `python3 validate.py banner.zip --json` — machine-readable output to post-process.
+- Exit codes: `0` pass/warnings, `1` errors (the network would reject it), `2` usage/IO error.
+- [Skill instructions (SKILL.md)](https://raw.githubusercontent.com/viewst/validate-banner-skill/main/skills/validate-banner/SKILL.md): how to interpret the report and relay fixes.
+
+## Use it to OPTIMIZE / FIX a banner
+
+`--fix` writes a corrected copy (`<input>_fixed.<zip|html>`, or `-o <path>`) — it never edits the input — for one resolved network:
+
+- `python3 validate.py banner.zip --network amazon_2dsp --fix` — strips non-whitelisted external URLs (the #1 Amazon DSP rejection), then, if still over the size limit, compresses raster images (JPEG/PNG) to the highest quality that fits.
+- Image compression needs Pillow (`pip install Pillow`); without it, `--fix` still strips external URLs and tells the user. Compression is lossy — advise the user to eyeball the result.
+- Failures it can't auto-fix (missing clickTag, wrong dimensions, missing special files) are reported with a human-readable suggestion to apply by hand.
+
+## Optional
+
+- [Source project (banner-validator)](https://github.com/viewst): the upstream web app; `rules.json` is generated from its ruleset (single source of truth).
+- [License (Apache-2.0)](https://raw.githubusercontent.com/viewst/validate-banner-skill/main/LICENSE) and [NOTICE](https://raw.githubusercontent.com/viewst/validate-banner-skill/main/NOTICE).
