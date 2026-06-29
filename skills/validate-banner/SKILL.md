@@ -1,6 +1,6 @@
 ---
 name: validate-banner
-description: Validate an HTML5 banner (zip archive or single HTML file) against ad-network requirements — a named network, all networks, or auto-detected. Use when the user asks to "validate this banner/zip/creative", "check this against <network> specs", "which network does this banner fit", "will Google Ads / Amazon DSP / Yandex accept this", or drops a banner zip and asks if it's OK. Reports errors/warnings with fix suggestions, and can auto-fix the two most common rejections with --fix: strip non-whitelisted external URLs (Amazon DSP) and compress images to fit the size limit, writing a fixed copy.
+description: Validate an HTML5 banner (zip archive or single HTML file) against ad-network requirements — a named network, all networks, or auto-detected. Use when the user asks to "validate this banner/zip/creative", "check this against <network> specs", "which network does this banner fit", "will Google Ads / Amazon DSP / Yandex accept this", or drops a banner zip and asks if it's OK. Reports errors/warnings with fix suggestions, and can auto-fix the two most common rejections with --fix — strip non-whitelisted external URLs (Amazon DSP) and compress images to fit the size limit, writing a fixed copy.
 ---
 
 # validate-banner
