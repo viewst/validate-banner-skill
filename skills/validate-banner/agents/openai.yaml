@@ -1,0 +1,5 @@
+interface:
+  display_name: "Validate Banner"
+  short_description: "Check HTML5 banners against ad-network rules"
+  brand_color: "#0074E8"
+  default_prompt: "Use $validate-banner to check this HTML5 banner and explain any ad-network rejection risks."

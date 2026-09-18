@@ -1,6 +1,10 @@
 [
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -25,6 +29,12 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "maxAnimationDurationMs": 30000,
+      "mustStopAfterLimit": true,
+      "policyStatus": "confirmed",
+      "source": "https://support.google.com/google-ads/answer/1722096?hl=en"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -49,6 +59,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "placement-specific",
+      "source": "https://support.google.com/campaignmanager/answer/2785592?hl=en"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -72,6 +86,12 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "maxAnimationDurationMs": 30000,
+      "mustStopAfterLimit": true,
+      "policyStatus": "confirmed",
+      "source": "https://support.google.com/displayvideo/answer/10261241?hl=en"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -95,6 +115,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "qualitative",
+      "source": "https://yandex.ru/support/direct/ru/moderation/technical-restrictions"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -120,6 +144,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -145,6 +173,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -169,6 +201,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -193,6 +229,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -217,6 +257,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "placement-specific",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "yastatic.net/pcode/adfox/loader.js"
@@ -243,6 +287,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "placement-specific",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "content.adriver.ru/html.js"
@@ -269,6 +317,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "content.adriver.ru/html.js"
@@ -295,6 +347,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "placement-specific",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "ns.sascdn.com/diff/templates/js/banner/sas-clicktag-3.1.js"
@@ -320,6 +376,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "candidate",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -343,6 +403,12 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "maxAnimationDurationMs": 30000,
+      "mustStopAfterLimit": true,
+      "policyStatus": "confirmed",
+      "source": "https://help.adroll.com/hc/en-us/articles/360030386192-Animated-HTML5-Web-Ads-Format-Guidelines"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -366,6 +432,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "placement-specific",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "acdn.adnxs.com/html5-lib/1.3.0/appnexus-html5-lib.min.js"
@@ -391,6 +461,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "adsby.bidtheatre.com/js/asxhtml5.min.js"
@@ -422,6 +496,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -445,6 +523,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "sting.de17a.com/html5.js"
@@ -470,6 +552,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "serving-sys-int.com/BurstingScript/EBLoader.js"
@@ -495,6 +581,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "placement-specific",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -518,6 +608,12 @@
   },
   {
     "sizeLimitBytes": 204800,
+    "animationPolicy": {
+      "maxAnimationDurationMs": 15000,
+      "mustStopAfterLimit": true,
+      "policyStatus": "confirmed",
+      "source": "https://www.thetradedesk.com/assets/global/documents/Creative_Specifications-en.pdf"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -541,6 +637,12 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "maxAnimationDurationMs": 15000,
+      "mustStopAfterLimit": true,
+      "policyStatus": "confirmed",
+      "source": "https://emea.adspecs.yahooinc.com/pages/policies-guidelines/html5-guidelines"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -564,6 +666,10 @@
   },
   {
     "sizeLimitBytes": 153600,
+    "animationPolicy": {
+      "policyStatus": "placement-specific",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -587,6 +693,13 @@
   },
   {
     "sizeLimitBytes": 460800,
+    "animationPolicy": {
+      "maxAnimationDurationMs": 30000,
+      "maxLoops": 3,
+      "mustStopAfterLimit": true,
+      "policyStatus": "confirmed",
+      "source": "https://help.quantcast.com/v1/docs/creative-specifications-display"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -610,6 +723,10 @@
   },
   {
     "sizeLimitBytes": 2097152,
+    "animationPolicy": {
+      "policyStatus": "unknown",
+      "source": "Internal investigation: VST-9995 (HTML5 animation duration limits)"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -633,6 +750,13 @@
   },
   {
     "sizeLimitBytes": 204800,
+    "animationPolicy": {
+      "maxAnimationDurationMs": 15000,
+      "maxLoops": 3,
+      "mustStopAfterLimit": true,
+      "policyStatus": "candidate",
+      "source": "https://advertising.amazon.co.uk/help/G9RM85VKHDKLDVP6"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [],
     "click": {
@@ -664,6 +788,13 @@
   },
   {
     "sizeLimitBytes": 204800,
+    "animationPolicy": {
+      "maxAnimationDurationMs": 15000,
+      "maxLoops": 3,
+      "mustStopAfterLimit": true,
+      "policyStatus": "candidate",
+      "source": "https://advertising.amazon.co.uk/help/G9RM85VKHDKLDVP6"
+    },
     "requireMetaAdSize": true,
     "requiredScripts": [
       "adkit-advertising.amazon/sdk/SDKLoader.js"

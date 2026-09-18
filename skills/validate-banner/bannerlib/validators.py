@@ -1,10 +1,11 @@
-"""The six pure validators + the registry that aggregates them into a report.
+"""The pure validators + the registry that aggregates them into a report.
 Ports src/validators/*.ts. Each validator is (bundle, rule) -> List[Check].
 Severity convention: error = the network rejects it; warning = worth a look;
 info = purely informational (never elevates the verdict); pass = satisfied."""
 from dataclasses import dataclass
 from typing import List, Optional
 
+from .animation import analyze_animation
 from .bundle import BannerBundle, all_text, base_name, ext_of, find_by_name
 from .format import format_bytes
 from .htmlprobe import (
@@ -139,6 +140,178 @@ def size_validator(bundle: BannerBundle, rule: NetworkRule) -> List[Check]:
             f"{format_bytes(limit)} limit for {rule.label}."
         ),
         evidence=evidence,
+    )]
+
+
+# ---- animation duration -----------------------------------------------------
+
+def _round_duration(milliseconds: float) -> float:
+    # JavaScript Math.round semantics for positive durations, to keep runner parity.
+    return int(milliseconds / 100 + 0.5) * 100
+
+
+def _format_duration(milliseconds: float) -> str:
+    seconds = int(milliseconds / 100 + 0.5) / 10
+    return f"{seconds:g}s"
+
+
+def _animation_policy_description(rule: NetworkRule) -> str:
+    policy = rule.animation_policy
+    constraints = []
+    if policy.get("maxAnimationDurationMs") is not None:
+        constraints.append(
+            f"maximum duration {_format_duration(policy['maxAnimationDurationMs'])}"
+        )
+    if policy.get("maxLoops") is not None:
+        constraints.append(f"at most {policy['maxLoops']} loops")
+    if policy.get("mustStopAfterLimit") and policy.get("maxAnimationDurationMs") is not None:
+        constraints.append("animation must stop by that limit")
+
+    if constraints:
+        confidence = (
+            "Documented policy"
+            if policy.get("policyStatus") == "confirmed"
+            else "Current conservative mapping"
+        )
+        return f"{confidence} for {rule.label}: {'; '.join(constraints)}."
+
+    statuses = {
+        "confirmed": "documented without a numeric value",
+        "placement-specific": "placement-specific",
+        "candidate": "not yet confirmed numerically",
+        "qualitative": "qualitative rather than numeric",
+        "unknown": "not numerically documented in the current mapping",
+    }
+    status = statuses.get(policy.get("policyStatus"), "not numerically documented")
+    return (
+        f"{rule.label} has no fixed numeric animation-duration limit in the current "
+        f"ruleset; its policy is {status}."
+    )
+
+
+def animation_duration_validator(bundle: BannerBundle, rule: NetworkRule) -> List[Check]:
+    policy = rule.animation_policy
+    limit = policy.get("maxAnimationDurationMs")
+    loop_limit = policy.get("maxLoops")
+    policy_text = _animation_policy_description(rule)
+    if limit is None and loop_limit is None:
+        return [Check(
+            id="animation-duration",
+            severity="info",
+            title="Animation duration policy",
+            detail=(
+                f"{policy_text} Check the selected placement's requirements if the banner animates."
+            ),
+        )]
+
+    analysis = analyze_animation(bundle)
+    confirmed = policy.get("policyStatus") == "confirmed"
+    limit_text = _format_duration(limit) if limit is not None else None
+    policy_verb = "limits" if confirmed else "may limit"
+    report_evidence = "\n".join(analysis.evidence) or None
+
+    if not analysis.detected:
+        return [Check(
+            id="animation-duration",
+            severity="info",
+            title="Animation duration policy",
+            detail=(
+                f"{policy_text} No statically measurable animation was found, but arbitrary "
+                "JavaScript can still create one at runtime; verify the final creative manually."
+            ),
+        )]
+
+    if analysis.infinite and (policy.get("mustStopAfterLimit") or loop_limit is not None):
+        constraints = []
+        if limit_text:
+            constraints.append(f"stop after {limit_text}")
+        if loop_limit is not None:
+            constraints.append(f"run at most {loop_limit} loops")
+        return [Check(
+            id="animation-duration",
+            severity="warning",
+            title="Animation may not stop",
+            detail=(
+                f"Static inspection found an infinite animation, while {rule.label} {policy_verb} "
+                f"creatives to {' and '.join(constraints)}."
+            ),
+            suggestion=(
+                "Replace infinite repeats with a finite loop count and stop every animation/timer"
+                + (f" by {limit_text}." if limit_text else " within the network limit.")
+            ),
+            evidence=report_evidence,
+        )]
+
+    measured = _round_duration(analysis.max_duration_ms) if analysis.max_duration_ms is not None else None
+    duration_exceeded = measured is not None and limit is not None and measured > limit
+    loops_exceeded = (
+        analysis.max_loops is not None
+        and loop_limit is not None
+        and analysis.max_loops > loop_limit
+    )
+
+    if duration_exceeded or loops_exceeded:
+        findings = []
+        if duration_exceeded:
+            findings.append(
+                f"a {_format_duration(measured)} end time against a {_format_duration(limit)} limit"
+            )
+        if loops_exceeded:
+            findings.append(f"{analysis.max_loops:g} iterations against a {loop_limit}-loop limit")
+        return [Check(
+            id="animation-duration",
+            severity="warning",
+            title="Animation exceeds the network policy",
+            detail=(
+                f"Static inspection found {' and '.join(findings)} for {rule.label}. "
+                + (
+                    "The network documents this limit."
+                    if confirmed
+                    else "The limit depends on placement or is conservatively mapped."
+                )
+            ),
+            suggestion=(
+                "Shorten the creative timeline"
+                + (f" to {limit_text} or less" if limit_text else "")
+                + (f" and use at most {loop_limit} loops" if loop_limit is not None else "")
+                + "."
+            ),
+            evidence=report_evidence,
+        )]
+
+    if analysis.uncertain:
+        measured_text = (
+            ""
+            if measured is None
+            else f" The measurable portion ends at {_format_duration(measured)}, but other runtime animation remains."
+        )
+        return [Check(
+            id="animation-duration",
+            severity="info",
+            title="Animation duration needs manual review",
+            detail=(
+                f"{policy_text} Animation code was found, but its complete end time cannot be proven without executing the banner."
+                f"{measured_text} Confirm that animation for {rule.label} stops"
+                + (f" by {limit_text}." if limit_text else " within the placement limit.")
+            ),
+            evidence=report_evidence,
+        )]
+
+    measured_text = (
+        "Animation was detected."
+        if measured is None
+        else f"Animation ends at {_format_duration(measured)}."
+    )
+    loop_text = "" if analysis.max_loops is None else f" Longest declared repeat count: {analysis.max_loops:g}."
+    return [Check(
+        id="animation-duration",
+        severity="info",
+        title="Animation duration information",
+        detail=(
+            f"{policy_text} {measured_text}{loop_text} "
+            "The statically measurable timing does not exceed this policy."
+        ),
+        evidence=report_evidence,
     )]
 
 
@@ -350,6 +523,7 @@ def external_url_validator(bundle: BannerBundle, rule: NetworkRule) -> List[Chec
 _VALIDATORS = [
     structure_validator,
     size_validator,
+    animation_duration_validator,
     dimensions_validator,
     required_tags_validator,
     click_tag_validator,

@@ -33,6 +33,7 @@ class NetworkRule:
     label: str
     group: str
     size_limit_bytes: int
+    animation_policy: dict
     require_meta_ad_size: bool
     required_scripts: List[str]
     click: ClickIntegration
@@ -67,6 +68,7 @@ def _parse_rule(n: dict) -> NetworkRule:
         label=n["label"],
         group=n["group"],
         size_limit_bytes=n["sizeLimitBytes"],
+        animation_policy=n["animationPolicy"],
         require_meta_ad_size=n["requireMetaAdSize"],
         required_scripts=list(n["requiredScripts"]),
         click=ClickIntegration(

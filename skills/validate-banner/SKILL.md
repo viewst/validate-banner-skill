@@ -1,6 +1,6 @@
 ---
 name: validate-banner
-description: Validate an HTML5 banner (zip archive or single HTML file) against ad-network requirements — a named network, all networks, or auto-detected. Use when the user asks to "validate this banner/zip/creative", "check this against <network> specs", "which network does this banner fit", "will Google Ads / Amazon DSP / Yandex accept this", or drops a banner zip and asks if it's OK. Reports errors/warnings with fix suggestions, and can auto-fix the two most common rejections with --fix — strip non-whitelisted external URLs (Amazon DSP) and compress images to fit the size limit, writing a fixed copy.
+description: Validate an HTML5 banner (zip archive or single HTML file) against ad-network requirements — a named network, all networks, or auto-detected. Use when the user asks to "validate this banner/zip/creative", "check this against an ad network's specs", "which network does this banner fit", "will Google Ads / Amazon DSP / Yandex accept this", or drops a banner zip and asks if it's OK. Reports errors/warnings with fix suggestions, and can auto-fix the two most common rejections with --fix — strip non-whitelisted external URLs (Amazon DSP) and compress images to fit the size limit, writing a fixed copy.
 ---
 
 # validate-banner
@@ -75,6 +75,12 @@ non-destructive: it writes a new file and never touches the input.
   auto-detectable — that's expected, not a failure.
 - The external-URL check scans raw text (like Amazon's own validator), so URLs
   inside JSON or script metadata are flagged intentionally.
+- The animation-duration check never executes banner code. It measures embedded
+  Viewst scene models and literal CSS/SVG timing, catches explicit infinite loops,
+  and recognizes common dynamic animation APIs. When the final end time cannot be
+  proved, it reports the network's duration policy as **info** and asks for a manual
+  review instead of fabricating an estimate. Only a statically explicit overrun or
+  infinite loop becomes a warning.
 
 ## Giving fix guidance
 
@@ -84,7 +90,7 @@ non-destructive: it writes a new file and never touches the input.
   compresses images and writes a fixed copy in one step. Confirm the input first
   (external URLs that are genuine runtime dependencies shouldn't be stripped; lossy
   compression can soften the creative).
-- For other failures (missing `clickTag`, wrong dimensions, missing special files),
+- For other failures (animation timing, missing `clickTag`, wrong dimensions, missing special files),
   `--fix` does nothing — those need human edits; relay the `fix:` suggestion.
 
 ## Maintenance
@@ -101,6 +107,9 @@ do not hand-edit the generated ones.**
   port of the same engine). Covered by `tests-py/` (including a Node↔Python parity
   test). Edit these directly when behaviour changes, and keep them in step with the
   TS source.
+- `agents/openai.yaml` — Codex-facing UI metadata. The repository exposes this same
+  canonical skill at `.agents/skills/validate-banner` through a symlink; do not
+  duplicate the generated runners there.
 
 After changing rules/validators/input adapters, run `npm run build:skill` (refreshes
 both generated artifacts), update `validate.py`/`bannerlib/` to match, and re-run

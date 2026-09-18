@@ -168,6 +168,9 @@ don't appear in `--list-networks`.
 
 - **Size** gates on the **zipped** weight for ZIP uploads (the raw size for a single
   HTML file); an uncompressed-over-limit case is a separate warning.
+- **Animation duration** is always surfaced with the selected network's policy.
+  Unknown or dynamically generated timing stays informational; only a statically
+  explicit overrun or infinite loop raises a warning.
 - **Auto-detect** keys off vendor `<script src>` markers a network's export injects.
   Networks without a marker (Google, Yandex, generic) aren't auto-detectable — that's
   expected; the tool then validates against the full matrix.

@@ -193,10 +193,10 @@ var require_util = __commonJS({
       return objectToString(re) === "[object RegExp]";
     }
     exports.isRegExp = isRegExp;
-    function isObject(arg) {
+    function isObject2(arg) {
       return typeof arg === "object" && arg !== null;
     }
-    exports.isObject = isObject;
+    exports.isObject = isObject2;
     function isDate(d) {
       return objectToString(d) === "[object Date]";
     }
@@ -12984,6 +12984,90 @@ var SIZE = {
   KB450: 460800,
   MB2: 2097152
 };
+var VST_9995_SOURCE = "Internal investigation: VST-9995 (HTML5 animation duration limits)";
+var UNKNOWN_ANIMATION_POLICY = {
+  policyStatus: "unknown",
+  source: VST_9995_SOURCE
+};
+var ANIMATION_POLICIES = {
+  default: UNKNOWN_ANIMATION_POLICY,
+  "yandex.direct": {
+    policyStatus: "qualitative",
+    source: "https://yandex.ru/support/direct/ru/moderation/technical-restrictions"
+  },
+  "yandex.display": UNKNOWN_ANIMATION_POLICY,
+  google_video_360: {
+    maxAnimationDurationMs: 3e4,
+    mustStopAfterLimit: true,
+    policyStatus: "confirmed",
+    source: "https://support.google.com/displayvideo/answer/10261241?hl=en"
+  },
+  google_campaign_manager: {
+    policyStatus: "placement-specific",
+    source: "https://support.google.com/campaignmanager/answer/2785592?hl=en"
+  },
+  google_ads: {
+    maxAnimationDurationMs: 3e4,
+    mustStopAfterLimit: true,
+    policyStatus: "confirmed",
+    source: "https://support.google.com/google-ads/answer/1722096?hl=en"
+  },
+  mytarget: UNKNOWN_ANIMATION_POLICY,
+  rambler: UNKNOWN_ANIMATION_POLICY,
+  getintent: UNKNOWN_ANIMATION_POLICY,
+  adfox: { policyStatus: "placement-specific", source: VST_9995_SOURCE },
+  adriver: { policyStatus: "placement-specific", source: VST_9995_SOURCE },
+  smartadserver: { policyStatus: "placement-specific", source: VST_9995_SOURCE },
+  verizon: { policyStatus: "candidate", source: VST_9995_SOURCE },
+  adcrowd: UNKNOWN_ANIMATION_POLICY,
+  adroll: {
+    maxAnimationDurationMs: 3e4,
+    mustStopAfterLimit: true,
+    policyStatus: "confirmed",
+    source: "https://help.adroll.com/hc/en-us/articles/360030386192-Animated-HTML5-Web-Ads-Format-Guidelines"
+  },
+  xandr: { policyStatus: "placement-specific", source: VST_9995_SOURCE },
+  bidtheatre: UNKNOWN_ANIMATION_POLICY,
+  choozle: UNKNOWN_ANIMATION_POLICY,
+  delta_projects: UNKNOWN_ANIMATION_POLICY,
+  sizmek: UNKNOWN_ANIMATION_POLICY,
+  stroer: { policyStatus: "placement-specific", source: VST_9995_SOURCE },
+  trade_desk: {
+    maxAnimationDurationMs: 15e3,
+    mustStopAfterLimit: true,
+    policyStatus: "confirmed",
+    source: "https://www.thetradedesk.com/assets/global/documents/Creative_Specifications-en.pdf"
+  },
+  amazon_dsp: {
+    maxAnimationDurationMs: 15e3,
+    maxLoops: 3,
+    mustStopAfterLimit: true,
+    policyStatus: "candidate",
+    source: "https://advertising.amazon.co.uk/help/G9RM85VKHDKLDVP6"
+  },
+  amazon_2dsp: {
+    maxAnimationDurationMs: 15e3,
+    maxLoops: 3,
+    mustStopAfterLimit: true,
+    policyStatus: "candidate",
+    source: "https://advertising.amazon.co.uk/help/G9RM85VKHDKLDVP6"
+  },
+  yahoo_ad_tech: {
+    maxAnimationDurationMs: 15e3,
+    mustStopAfterLimit: true,
+    policyStatus: "confirmed",
+    source: "https://emea.adspecs.yahooinc.com/pages/policies-guidelines/html5-guidelines"
+  },
+  beeswax: UNKNOWN_ANIMATION_POLICY,
+  xandr_invest: { policyStatus: "placement-specific", source: VST_9995_SOURCE },
+  quantcast: {
+    maxAnimationDurationMs: 3e4,
+    maxLoops: 3,
+    mustStopAfterLimit: true,
+    policyStatus: "confirmed",
+    source: "https://help.quantcast.com/v1/docs/creative-specifications-display"
+  }
+};
 var AMAZON_WHITELIST = [
   "adkit-advertising.amazon",
   // required Amazon DSP SDK loader
@@ -13011,8 +13095,11 @@ var amazonExternal = (sdkRequired) => ({
   sdkRequired
 });
 function standardNetwork(partial) {
+  const animationPolicy = ANIMATION_POLICIES[partial.id];
+  if (!animationPolicy) throw new Error(`Missing animation policy for ${partial.id}`);
   return {
     sizeLimitBytes: SIZE.KB150,
+    animationPolicy,
     requireMetaAdSize: true,
     requiredScripts: [],
     click: STANDARD_CLICK,
@@ -13579,6 +13666,770 @@ async function encodeRasterNode(blob, format, t) {
   return blob;
 }
 
+// src/lib/animation.ts
+var DEFAULT_SCENE_DURATION_SECONDS = 5;
+var DEFAULT_TYPEWRITER_STAGGER_SECONDS = 0.05;
+var MIN_TRANSITION_DURATION_SECONDS = 1e-3;
+var MAX_TRANSITION_DURATION_SECONDS = 10;
+var MAX_EVIDENCE = 6;
+function isObject(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function finiteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value) ? value : void 0;
+}
+function positiveNumber(value) {
+  const number = finiteNumber(value);
+  return number !== void 0 && number > 0 ? number : void 0;
+}
+function formatSeconds(milliseconds) {
+  const seconds = Math.round(milliseconds / 1e3 * 10) / 10;
+  return `${seconds}s`;
+}
+function assignedJsonArray(text, name) {
+  const marker = new RegExp(`\\b(?:let|const|var)\\s+${name}\\s*=\\s*`, "g");
+  const match = marker.exec(text);
+  if (!match) return { found: false };
+  const start = match.index + match[0].length;
+  if (text[start] !== "[") return { found: true };
+  let depth2 = 0;
+  let quote = "";
+  let escaped = false;
+  for (let i = start; i < text.length; i += 1) {
+    const char = text[i];
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === quote) {
+        quote = "";
+      }
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === "[") depth2 += 1;
+    if (char === "]") {
+      depth2 -= 1;
+      if (depth2 === 0) {
+        try {
+          const parsed = JSON.parse(text.slice(start, i + 1));
+          return { found: true, value: Array.isArray(parsed) ? parsed : void 0 };
+        } catch {
+          return { found: true };
+        }
+      }
+    }
+  }
+  return { found: true };
+}
+function metaNumber(animation, key) {
+  const meta = isObject(animation.metaDescription) ? animation.metaDescription : void 0;
+  const field = meta && isObject(meta[key]) ? meta[key] : void 0;
+  return field ? finiteNumber(field.value) ?? finiteNumber(field.defaultValue) : void 0;
+}
+function normalizeStagger(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  return isObject(value) ? finiteNumber(value.each) : void 0;
+}
+function typewriterStagger(animation) {
+  const fromMeta = metaNumber(animation, "stagger");
+  if (fromMeta !== void 0) return fromMeta;
+  const description = isObject(animation.description) ? animation.description : void 0;
+  const fromTo = description && isObject(description.fromTo) ? description.fromTo : void 0;
+  const to = fromTo && isObject(fromTo.to) ? fromTo.to : void 0;
+  const directTo = description && isObject(description.to) ? description.to : void 0;
+  const from = description && isObject(description.from) ? description.from : void 0;
+  return normalizeStagger(to?.stagger) ?? normalizeStagger(directTo?.stagger) ?? normalizeStagger(from?.stagger) ?? DEFAULT_TYPEWRITER_STAGGER_SECONDS;
+}
+var NAMED_HTML_ENTITIES = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: "\xA0",
+  ensp: "\u2002",
+  emsp: "\u2003",
+  thinsp: "\u2009"
+};
+function decodedTextLength(item) {
+  if (isObject(item.textFragments)) {
+    const maxEnd = Object.values(item.textFragments).reduce((max, fragment) => {
+      const end = isObject(fragment) ? finiteNumber(fragment.endIndex) ?? 0 : 0;
+      return Math.max(max, end);
+    }, 0);
+    if (maxEnd > 0) return maxEnd;
+  }
+  if (item.text === void 0 || item.text === null) return 0;
+  const plain = String(item.text).replace(/<[^>]*>/g, "").replace(/&#x([0-9a-f]+);/gi, (original, hex) => {
+    try {
+      return String.fromCodePoint(Number.parseInt(hex, 16));
+    } catch {
+      return original;
+    }
+  }).replace(/&#(\d+);/g, (original, decimal) => {
+    try {
+      return String.fromCodePoint(Number.parseInt(decimal, 10));
+    } catch {
+      return original;
+    }
+  }).replace(/&([a-z0-9]+);/gi, (original, entity) => {
+    return NAMED_HTML_ENTITIES[entity.toLowerCase()] ?? original;
+  }).replace(/&nbsp(?!;)/gi, "\xA0");
+  return plain.length;
+}
+function animationVisibleDuration(animation, textLength) {
+  let duration = finiteNumber(animation.duration) ?? 0;
+  const textConfig = isObject(animation.textAnimationConfig) ? animation.textAnimationConfig : void 0;
+  if (textConfig?.typewriter) {
+    duration = textLength === void 0 ? 1e-3 : typewriterStagger(animation) * textLength;
+  }
+  const repeat = metaNumber(animation, "repeat");
+  const repeatDelay = metaNumber(animation, "repeatDelay");
+  return repeat !== void 0 && repeatDelay !== void 0 && repeat > 0 ? (repeat + 1) * duration + repeatDelay * repeat : duration;
+}
+function itemDuration(item) {
+  const animations = Array.isArray(item.animations) ? item.animations.filter(isObject) : [];
+  const hasTextAnimation = animations.some((animation) => {
+    return isObject(animation.textAnimationConfig) || typeof animation.name === "string" && (animation.name.startsWith("char") || animation.name.startsWith("word"));
+  });
+  const textLength = hasTextAnimation ? decodedTextLength(item) : void 0;
+  return animations.reduce((max, animation) => {
+    const delay = finiteNumber(animation.delay) ?? 0;
+    return Math.max(max, delay + animationVisibleDuration(animation, textLength));
+  }, 0);
+}
+function normalizedTransitionDuration(raw) {
+  const duration = finiteNumber(raw);
+  if (duration === void 0 || duration <= 0) return 0;
+  return Math.min(
+    MAX_TRANSITION_DURATION_SECONDS,
+    Math.max(MIN_TRANSITION_DURATION_SECONDS, duration)
+  );
+}
+function compressedTransitions(scenes) {
+  const compressed = /* @__PURE__ */ new Map();
+  for (let i = 1; i < scenes.length - 1; i += 1) {
+    const scene = scenes[i];
+    const next = scenes[i + 1];
+    const incoming = scene.transition;
+    const outgoing = next.transition;
+    if (!incoming || !outgoing) continue;
+    if (incoming.type === "instant" || outgoing.type === "instant") continue;
+    if (incoming.type === "fade" || outgoing.type === "fade") continue;
+    const incomingDuration = compressed.get(scene.sceneId) ?? normalizedTransitionDuration(incoming.duration);
+    const outgoingDuration = compressed.get(next.sceneId) ?? normalizedTransitionDuration(outgoing.duration);
+    const total = incomingDuration + outgoingDuration;
+    if (total > scene.duration && scene.duration > 0) {
+      const ratio = scene.duration / total;
+      compressed.set(
+        scene.sceneId,
+        Math.max(MIN_TRANSITION_DURATION_SECONDS, incomingDuration * ratio)
+      );
+      compressed.set(
+        next.sceneId,
+        Math.max(MIN_TRANSITION_DURATION_SECONDS, outgoingDuration * ratio)
+      );
+    }
+  }
+  return compressed;
+}
+function viewstDuration(itemsValue, scenesValue) {
+  const items = itemsValue.filter(isObject);
+  const rawScenes = scenesValue.filter(isObject);
+  if (rawScenes.length === 0) return void 0;
+  const itemsById = new Map(
+    items.flatMap(
+      (item) => typeof item.creativeId === "string" ? [[item.creativeId, item]] : []
+    )
+  );
+  const scenes = rawScenes.map((scene, index) => {
+    const explicit = positiveNumber(scene.sceneDuration);
+    const sceneItems = Array.isArray(scene.items) ? scene.items.flatMap((id) => typeof id === "string" ? [itemsById.get(id)] : []) : [];
+    const fallback = sceneItems.reduce(
+      (max, item) => item ? Math.max(max, itemDuration(item)) : max,
+      0
+    );
+    return {
+      sceneId: typeof scene.sceneId === "string" ? scene.sceneId : `scene-${index}`,
+      duration: explicit ?? (fallback > 0 ? fallback : DEFAULT_SCENE_DURATION_SECONDS),
+      transition: isObject(scene.transition) ? scene.transition : void 0
+    };
+  });
+  const compressed = compressedTransitions(scenes);
+  let cumulativeStart = 0;
+  let maxEnd = 0;
+  scenes.forEach((scene, index) => {
+    maxEnd = Math.max(maxEnd, cumulativeStart + scene.duration);
+    const next = scenes[index + 1];
+    const transition = next?.transition;
+    const effective = next ? compressed.get(next.sceneId) ?? finiteNumber(transition?.duration) ?? 0 : 0;
+    const overlap = transition?.type !== "instant" && effective > 0 ? Math.min(
+      scene.duration,
+      Math.min(
+        MAX_TRANSITION_DURATION_SECONDS,
+        Math.max(MIN_TRANSITION_DURATION_SECONDS, effective)
+      )
+    ) : 0;
+    cumulativeStart += scene.duration - overlap;
+  });
+  return Math.max(0, maxEnd) * 1e3;
+}
+function viewstLoops(itemsValue) {
+  let loops;
+  for (const item of itemsValue.filter(isObject)) {
+    const animations = Array.isArray(item.animations) ? item.animations.filter(isObject) : [];
+    for (const animation of animations) {
+      const repeat = metaNumber(animation, "repeat");
+      if (repeat !== void 0 && repeat > 0) loops = Math.max(loops ?? 1, repeat + 1);
+    }
+  }
+  return loops;
+}
+function viewstObservations(path, text) {
+  if (!/new\s+UniversalAnimationEngine\s*\(/.test(text)) return [];
+  const items = assignedJsonArray(text, "items");
+  const scenes = assignedJsonArray(text, "scenes");
+  if (!items.found || !scenes.found) return [];
+  if (!items.value || !scenes.value) {
+    return [
+      {
+        uncertain: true,
+        evidence: `${path}: Viewst animation model found, but its timing data could not be parsed`
+      }
+    ];
+  }
+  const durationMs = viewstDuration(items.value, scenes.value);
+  if (durationMs === void 0) {
+    return [
+      {
+        uncertain: true,
+        evidence: `${path}: Viewst animation model has no readable scenes`
+      }
+    ];
+  }
+  return [
+    {
+      durationMs,
+      loops: viewstLoops(items.value),
+      evidence: `${path}: Viewst scene model ends at ${formatSeconds(durationMs)}`
+    }
+  ];
+}
+function splitTopLevel(value, separator) {
+  const result = [];
+  let start = 0;
+  let quote = "";
+  let escaped = false;
+  let depth2 = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    const char = value[i];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = "";
+      continue;
+    }
+    if (char === '"' || char === "'") quote = char;
+    else if (char === "(" || char === "[") depth2 += 1;
+    else if (char === ")" || char === "]") depth2 = Math.max(0, depth2 - 1);
+    else if (char === separator && depth2 === 0) {
+      result.push(value.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  result.push(value.slice(start).trim());
+  return result.filter(Boolean);
+}
+function splitWhitespace(value) {
+  const result = [];
+  let start = -1;
+  let quote = "";
+  let escaped = false;
+  let depth2 = 0;
+  for (let i = 0; i <= value.length; i += 1) {
+    const char = value[i] ?? " ";
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = "";
+    } else if (char === '"' || char === "'") {
+      quote = char;
+      if (start < 0) start = i;
+    } else if (char === "(" || char === "[") {
+      depth2 += 1;
+      if (start < 0) start = i;
+    } else if (char === ")" || char === "]") {
+      depth2 = Math.max(0, depth2 - 1);
+    } else if (/\s/.test(char) && depth2 === 0) {
+      if (start >= 0) result.push(value.slice(start, i));
+      start = -1;
+    } else if (start < 0) {
+      start = i;
+    }
+  }
+  return result;
+}
+function cssTime(value) {
+  const token = value.trim().toLowerCase();
+  if (token === "0" || token === "+0" || token === "-0") return 0;
+  const match = /^(-?(?:\d+(?:\.\d+)?|\.\d+))(ms|s)$/.exec(token);
+  if (!match) return void 0;
+  const amount = Number(match[1]);
+  return match[2] === "s" ? amount * 1e3 : amount;
+}
+function cssVariables(texts) {
+  const values = /* @__PURE__ */ new Map();
+  const ambiguous = /* @__PURE__ */ new Set();
+  const pattern = /(--[\w-]+)\s*:\s*([^;{}]+)/g;
+  for (const text of texts) {
+    for (const match of text.matchAll(pattern)) {
+      const [, name, raw] = match;
+      const value = raw.trim();
+      const previous = values.get(name);
+      if (previous !== void 0 && previous !== value) ambiguous.add(name);
+      else if (!ambiguous.has(name)) values.set(name, value);
+    }
+  }
+  return { values, ambiguous };
+}
+function cssSource(path, text) {
+  if (extOf(path) === "css") return text;
+  if (!["html", "htm", "svg"].includes(extOf(path))) return "";
+  const fragments = [];
+  for (const match of text.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi)) {
+    fragments.push(match[1]);
+  }
+  for (const match of text.matchAll(/\bstyle\s*=\s*(["'])([\s\S]*?)\1/gi)) {
+    fragments.push(`:inline { ${match[2]} }`);
+  }
+  return fragments.join("\n");
+}
+function resolveCssVariables(value, variables) {
+  let resolved = value;
+  for (let pass = 0; pass < 5 && resolved.includes("var("); pass += 1) {
+    let failed = false;
+    resolved = resolved.replace(
+      /var\(\s*(--[\w-]+)\s*(?:,\s*([^()]+))?\)/g,
+      (_match, name, fallback) => {
+        if (!variables.ambiguous.has(name) && variables.values.has(name)) {
+          return variables.values.get(name);
+        }
+        if (fallback !== void 0) return fallback.trim();
+        failed = true;
+        return _match;
+      }
+    );
+    if (failed) return void 0;
+  }
+  return resolved.includes("var(") ? void 0 : resolved;
+}
+var CSS_NON_NAME_TOKENS = /* @__PURE__ */ new Set([
+  "ease",
+  "linear",
+  "ease-in",
+  "ease-out",
+  "ease-in-out",
+  "step-start",
+  "step-end",
+  "normal",
+  "reverse",
+  "alternate",
+  "alternate-reverse",
+  "forwards",
+  "backwards",
+  "both",
+  "running",
+  "paused"
+]);
+function shorthandItem(value) {
+  let durationMs;
+  let delayMs;
+  let loops;
+  let name = "none";
+  let uncertain = false;
+  for (const token of splitWhitespace(value)) {
+    const lower = token.toLowerCase();
+    const time = cssTime(lower);
+    if (time !== void 0) {
+      if (durationMs === void 0) durationMs = time;
+      else if (delayMs === void 0) delayMs = time;
+      continue;
+    }
+    if (lower === "infinite") {
+      loops = "infinite";
+      continue;
+    }
+    if (/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(lower)) {
+      loops = Number(lower);
+      continue;
+    }
+    if (CSS_NON_NAME_TOKENS.has(lower) || /^(?:cubic-bezier|steps|linear)\(/.test(lower)) {
+      continue;
+    }
+    if (/^(?:calc|min|max|clamp|var)\(/.test(lower)) {
+      uncertain = true;
+      continue;
+    }
+    name = token;
+  }
+  return {
+    name,
+    durationMs: durationMs ?? 0,
+    delayMs: delayMs ?? 0,
+    loops: loops ?? 1,
+    uncertain
+  };
+}
+function parsedTimeList(value, variables) {
+  return splitTopLevel(value, ",").map((item) => {
+    const resolved = resolveCssVariables(item, variables);
+    return resolved === void 0 ? void 0 : cssTime(resolved);
+  });
+}
+function parsedLoopList(value, variables) {
+  return splitTopLevel(value, ",").map((item) => {
+    const resolved = resolveCssVariables(item, variables)?.trim().toLowerCase();
+    if (resolved === "infinite") return "infinite";
+    return resolved && /^(?:\d+(?:\.\d+)?|\.\d+)$/.test(resolved) ? Number(resolved) : void 0;
+  });
+}
+function declarationMap(block) {
+  return splitTopLevel(block, ";").flatMap((declaration) => {
+    const colon = declaration.indexOf(":");
+    if (colon <= 0) return [];
+    return [[declaration.slice(0, colon).trim().toLowerCase(), declaration.slice(colon + 1).trim()]];
+  });
+}
+function cssBlockObservations(path, block, variables) {
+  let items;
+  let names;
+  let durations;
+  let delays;
+  let loops;
+  let sawAnimationProperty = false;
+  for (const [property, rawValue] of declarationMap(block)) {
+    const normalized = property.replace(/^-webkit-/, "");
+    if (!normalized.startsWith("animation")) continue;
+    sawAnimationProperty = true;
+    if (normalized === "animation") {
+      items = splitTopLevel(rawValue, ",").map((item) => {
+        const resolved = resolveCssVariables(item, variables);
+        return resolved === void 0 ? { name: "<dynamic>", uncertain: true } : shorthandItem(resolved);
+      });
+      names = items.map((item) => item.name);
+      durations = items.map((item) => item.durationMs);
+      delays = items.map((item) => item.delayMs);
+      loops = items.map((item) => item.loops);
+    } else if (normalized === "animation-name") {
+      names = splitTopLevel(rawValue, ",").map((item) => item.trim());
+    } else if (normalized === "animation-duration") {
+      durations = parsedTimeList(rawValue, variables);
+    } else if (normalized === "animation-delay") {
+      delays = parsedTimeList(rawValue, variables);
+    } else if (normalized === "animation-iteration-count") {
+      loops = parsedLoopList(rawValue, variables);
+    }
+  }
+  if (!sawAnimationProperty) return [];
+  const count = Math.max(names?.length ?? 0, durations?.length ?? 0, delays?.length ?? 0, loops?.length ?? 0);
+  const observations = [];
+  for (let index = 0; index < count; index += 1) {
+    const name = names?.[index % names.length] ?? "<from CSS cascade>";
+    if (name.toLowerCase() === "none") continue;
+    const durationMs = durations?.[index % durations.length];
+    const delayMs = delays?.[index % delays.length] ?? 0;
+    const iterationCount = loops?.[index % loops.length] ?? 1;
+    const inheritedUncertainty = items?.[index % items.length]?.uncertain ?? false;
+    if (durationMs === void 0 || delayMs === void 0 || iterationCount === void 0) {
+      observations.push({
+        uncertain: true,
+        evidence: `${path}: CSS animation ${name} has dynamic or cascade-dependent timing`
+      });
+      continue;
+    }
+    if (durationMs <= 0 || iterationCount === 0) continue;
+    if (iterationCount === "infinite") {
+      observations.push({
+        infinite: true,
+        uncertain: inheritedUncertainty,
+        evidence: `${path}: CSS animation ${name} repeats indefinitely`
+      });
+      continue;
+    }
+    const total = Math.max(0, delayMs + durationMs * iterationCount);
+    observations.push({
+      durationMs: total,
+      loops: iterationCount,
+      uncertain: inheritedUncertainty || name === "<from CSS cascade>",
+      evidence: `${path}: CSS animation ${name} ends at ${formatSeconds(total)} (${iterationCount} iteration${iterationCount === 1 ? "" : "s"})`
+    });
+  }
+  return observations;
+}
+function cssObservations(path, text, variables) {
+  const clean = cssSource(path, text).replace(/\/\*[\s\S]*?\*\//g, "");
+  const blocks = [];
+  for (const match of clean.matchAll(/\{([^{}]*)\}/g)) blocks.push(match[1]);
+  return blocks.flatMap((block) => cssBlockObservations(path, block, variables));
+}
+function markupAttribute(tag, name) {
+  const match = new RegExp(`\\b${name}\\s*=\\s*(["'])(.*?)\\1`, "i").exec(tag);
+  return match?.[2];
+}
+function svgTime(value) {
+  if (!value) return void 0;
+  const raw = value.trim().toLowerCase();
+  const css = cssTime(raw);
+  if (css !== void 0) return css;
+  const unit = /^(-?(?:\d+(?:\.\d+)?|\.\d+))(min|h)$/.exec(raw);
+  if (unit) return Number(unit[1]) * (unit[2] === "h" ? 36e5 : 6e4);
+  const clock = /^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?)$/.exec(raw);
+  if (!clock) return void 0;
+  return (Number(clock[1] ?? 0) * 3600 + Number(clock[2]) * 60 + Number(clock[3])) * 1e3;
+}
+function svgObservations(path, text) {
+  const observations = [];
+  for (const match of text.matchAll(/<animate(?:Transform|Motion|Color)?\b[^>]*>/gi)) {
+    const tag = match[0];
+    const duration = svgTime(markupAttribute(tag, "dur"));
+    const beginRaw = markupAttribute(tag, "begin");
+    const begin = beginRaw ? svgTime(beginRaw.split(";")[0]) : 0;
+    const repeatRaw = markupAttribute(tag, "repeatCount")?.trim().toLowerCase();
+    const repeatDurationRaw = markupAttribute(tag, "repeatDur")?.trim().toLowerCase();
+    if (repeatRaw === "indefinite" || repeatDurationRaw === "indefinite") {
+      observations.push({
+        infinite: true,
+        evidence: `${path}: SVG animation repeats indefinitely`
+      });
+      continue;
+    }
+    const repeat = repeatRaw && /^\d+(?:\.\d+)?$/.test(repeatRaw) ? Number(repeatRaw) : 1;
+    const repeatDuration = svgTime(repeatDurationRaw);
+    if (duration === void 0 || begin === void 0) {
+      observations.push({
+        uncertain: true,
+        evidence: `${path}: SVG animation has event-based or dynamic timing`
+      });
+      continue;
+    }
+    if (duration <= 0 || repeat === 0) continue;
+    const total = begin + (repeatDuration ?? duration * repeat);
+    observations.push({
+      durationMs: total,
+      loops: repeat,
+      evidence: `${path}: SVG animation ends at ${formatSeconds(total)} (${repeat} iteration${repeat === 1 ? "" : "s"})`
+    });
+  }
+  return observations;
+}
+function dynamicObservations(path, text, hasViewstModel) {
+  if (hasViewstModel) return [];
+  const observations = [];
+  const addUnknown = (label) => {
+    observations.push({ uncertain: true, evidence: `${path}: ${label} timing is runtime-defined` });
+  };
+  if (/\b(?:gsap|TweenMax|TweenLite)\s*\.\s*(?:to|from|fromTo|timeline)\s*\(|\bnew\s+Timeline(?:Max|Lite)\s*\(/.test(text)) {
+    if (/\brepeat\s*:\s*(?:-1|Infinity)\b/.test(text)) {
+      observations.push({ infinite: true, evidence: `${path}: GSAP declares an infinite repeat` });
+    } else {
+      addUnknown("GSAP animation");
+    }
+  }
+  if (/\bcreatejs\s*\.\s*(?:Tween|Ticker)\b/.test(text)) addUnknown("CreateJS animation");
+  if (/\.animate\s*\(/.test(text)) {
+    if (/\biterations\s*:\s*Infinity\b/.test(text)) {
+      observations.push({ infinite: true, evidence: `${path}: Web Animations API repeats indefinitely` });
+    } else {
+      addUnknown("Web Animations API");
+    }
+  }
+  if (/\banime\s*\(/.test(text)) {
+    if (/\bloop\s*:\s*true\b/.test(text)) {
+      observations.push({ infinite: true, evidence: `${path}: anime.js declares an infinite loop` });
+    } else {
+      addUnknown("anime.js animation");
+    }
+  }
+  if (/\blottie\s*\.\s*loadAnimation\s*\(/.test(text)) {
+    if (/\bloop\s*:\s*true\b/.test(text)) {
+      observations.push({ infinite: true, evidence: `${path}: Lottie declares an infinite loop` });
+    } else {
+      addUnknown("Lottie animation");
+    }
+  }
+  if (/\brequestAnimationFrame\s*\(/.test(text)) addUnknown("requestAnimationFrame loop");
+  if (/\bsetTimeout\s*\(/.test(text)) addUnknown("setTimeout schedule");
+  if (/\bsetInterval\s*\(/.test(text)) addUnknown("setInterval loop");
+  for (const match of text.matchAll(/<video\b[^>]*>/gi)) {
+    const tag = match[0];
+    if (!/\bautoplay\b/i.test(tag)) continue;
+    if (/\bloop\b/i.test(tag)) {
+      observations.push({ infinite: true, evidence: `${path}: autoplay video loops indefinitely` });
+    } else {
+      addUnknown("autoplay video");
+    }
+  }
+  return observations;
+}
+function analyzeAnimation(bundle) {
+  const texts = allText(bundle);
+  const variables = cssVariables(
+    texts.map(({ path, text }) => cssSource(path, text).replace(/\/\*[\s\S]*?\*\//g, ""))
+  );
+  const observations = [];
+  for (const { path, text } of texts) {
+    const viewst = viewstObservations(path, text);
+    observations.push(...viewst);
+    observations.push(...cssObservations(path, text, variables));
+    observations.push(...svgObservations(path, text));
+    observations.push(...dynamicObservations(path, text, viewst.some((item) => item.durationMs !== void 0)));
+  }
+  const maxDurationMs = observations.reduce((max, item) => {
+    if (item.durationMs === void 0) return max;
+    return max === void 0 ? item.durationMs : Math.max(max, item.durationMs);
+  }, void 0);
+  const maxLoops = observations.reduce((max, item) => {
+    if (item.loops === void 0) return max;
+    return max === void 0 ? item.loops : Math.max(max, item.loops);
+  }, void 0);
+  const evidence2 = [...new Set(observations.map((item) => item.evidence))].slice(0, MAX_EVIDENCE);
+  return {
+    detected: observations.length > 0,
+    maxDurationMs,
+    maxLoops,
+    infinite: observations.some((item) => item.infinite),
+    uncertain: observations.some((item) => item.uncertain),
+    evidence: evidence2
+  };
+}
+
+// src/validators/animationDuration.ts
+function roundDuration(milliseconds) {
+  return Math.round(milliseconds / 100) * 100;
+}
+function formatDuration(milliseconds) {
+  return `${Math.round(milliseconds / 1e3 * 10) / 10}s`;
+}
+function evidence(lines) {
+  return lines.length > 0 ? lines.join("\n") : void 0;
+}
+function policyDescription(rule) {
+  const policy = rule.animationPolicy;
+  const constraints = [];
+  if (policy.maxAnimationDurationMs !== void 0) {
+    constraints.push(`maximum duration ${formatDuration(policy.maxAnimationDurationMs)}`);
+  }
+  if (policy.maxLoops !== void 0) constraints.push(`at most ${policy.maxLoops} loops`);
+  if (policy.mustStopAfterLimit && policy.maxAnimationDurationMs !== void 0) {
+    constraints.push("animation must stop by that limit");
+  }
+  if (constraints.length > 0) {
+    const confidence = policy.policyStatus === "confirmed" ? "Documented policy" : "Current conservative mapping";
+    return `${confidence} for ${rule.label}: ${constraints.join("; ")}.`;
+  }
+  const status = {
+    confirmed: "documented without a numeric value",
+    "placement-specific": "placement-specific",
+    candidate: "not yet confirmed numerically",
+    qualitative: "qualitative rather than numeric",
+    unknown: "not numerically documented in the current mapping"
+  }[policy.policyStatus];
+  return `${rule.label} has no fixed numeric animation-duration limit in the current ruleset; its policy is ${status}.`;
+}
+function animationDurationValidator(bundle, rule) {
+  const policy = rule.animationPolicy;
+  const limit = policy.maxAnimationDurationMs;
+  const loopLimit = policy.maxLoops;
+  const policyText = policyDescription(rule);
+  if (limit === void 0 && loopLimit === void 0) {
+    return [
+      {
+        id: "animation-duration",
+        severity: "info",
+        title: "Animation duration policy",
+        detail: `${policyText} Check the selected placement's requirements if the banner animates.`
+      }
+    ];
+  }
+  const analysis = analyzeAnimation(bundle);
+  const policyIsConfirmed = policy.policyStatus === "confirmed";
+  const limitText = limit === void 0 ? void 0 : formatDuration(limit);
+  const policyVerb = policyIsConfirmed ? "limits" : "may limit";
+  if (!analysis.detected) {
+    return [
+      {
+        id: "animation-duration",
+        severity: "info",
+        title: "Animation duration policy",
+        detail: `${policyText} No statically measurable animation was found, but arbitrary JavaScript can still create one at runtime; verify the final creative manually.`
+      }
+    ];
+  }
+  if (analysis.infinite && (policy.mustStopAfterLimit || loopLimit !== void 0)) {
+    const constraints = [
+      limitText ? `stop after ${limitText}` : void 0,
+      loopLimit !== void 0 ? `run at most ${loopLimit} loops` : void 0
+    ].filter(Boolean);
+    return [
+      {
+        id: "animation-duration",
+        severity: "warning",
+        title: "Animation may not stop",
+        detail: `Static inspection found an infinite animation, while ${rule.label} ${policyVerb} creatives to ${constraints.join(" and ")}.`,
+        suggestion: `Replace infinite repeats with a finite loop count and stop every animation/timer${limitText ? ` by ${limitText}` : " within the network limit"}.`,
+        evidence: evidence(analysis.evidence)
+      }
+    ];
+  }
+  const measured = analysis.maxDurationMs === void 0 ? void 0 : roundDuration(analysis.maxDurationMs);
+  const durationExceeded = measured !== void 0 && limit !== void 0 && measured > limit;
+  const loopsExceeded = analysis.maxLoops !== void 0 && loopLimit !== void 0 && analysis.maxLoops > loopLimit;
+  if (durationExceeded || loopsExceeded) {
+    const findings = [
+      durationExceeded && measured !== void 0 && limit !== void 0 ? `a ${formatDuration(measured)} end time against a ${formatDuration(limit)} limit` : void 0,
+      loopsExceeded && analysis.maxLoops !== void 0 && loopLimit !== void 0 ? `${analysis.maxLoops} iterations against a ${loopLimit}-loop limit` : void 0
+    ].filter(Boolean);
+    return [
+      {
+        id: "animation-duration",
+        severity: "warning",
+        title: "Animation exceeds the network policy",
+        detail: `Static inspection found ${findings.join(" and ")} for ${rule.label}. ${policyIsConfirmed ? "The network documents this limit." : "The limit depends on placement or is conservatively mapped."}`,
+        suggestion: `Shorten the creative timeline${limitText ? ` to ${limitText} or less` : ""}${loopLimit !== void 0 ? ` and use at most ${loopLimit} loops` : ""}.`,
+        evidence: evidence(analysis.evidence)
+      }
+    ];
+  }
+  if (analysis.uncertain) {
+    const measuredText2 = measured === void 0 ? "" : ` The measurable portion ends at ${formatDuration(measured)}, but other runtime animation remains.`;
+    return [
+      {
+        id: "animation-duration",
+        severity: "info",
+        title: "Animation duration needs manual review",
+        detail: `${policyText} Animation code was found, but its complete end time cannot be proven without executing the banner.${measuredText2} Confirm that animation for ${rule.label} stops${limitText ? ` by ${limitText}` : " within the placement limit"}.`,
+        evidence: evidence(analysis.evidence)
+      }
+    ];
+  }
+  const measuredText = measured === void 0 ? "Animation was detected." : `Animation ends at ${formatDuration(measured)}.`;
+  const loopText = analysis.maxLoops === void 0 ? "" : ` Longest declared repeat count: ${analysis.maxLoops}.`;
+  return [
+    {
+      id: "animation-duration",
+      severity: "info",
+      title: "Animation duration information",
+      detail: `${policyText} ${measuredText}${loopText} The statically measurable timing does not exceed this policy.`,
+      evidence: evidence(analysis.evidence)
+    }
+  ];
+}
+
 // src/validators/clickTag.ts
 var FAMILY_LABEL = {
   standard: "standard clickTag",
@@ -13764,7 +14615,7 @@ function sizeValidator(bundle, rule) {
   const limit = rule.sizeLimitBytes;
   const measured = bundle.zippedBytes ?? bundle.totalBytes;
   const label = bundle.zippedBytes != null ? "Zipped" : "Total";
-  const evidence = bundle.zippedBytes != null ? `${formatBytes(measured)} zipped \xB7 ${formatBytes(bundle.totalBytes)} uncompressed` : `${formatBytes(measured)} uncompressed`;
+  const evidence2 = bundle.zippedBytes != null ? `${formatBytes(measured)} zipped \xB7 ${formatBytes(bundle.totalBytes)} uncompressed` : `${formatBytes(measured)} uncompressed`;
   if (measured > limit) {
     return [
       {
@@ -13773,7 +14624,7 @@ function sizeValidator(bundle, rule) {
         title: "Exceeds size limit",
         detail: `${label} weight is ${formatBytes(measured)}, over the ${formatBytes(limit)} limit for ${rule.label}.`,
         suggestion: "Compress images, subset fonts to used glyphs, and drop unused assets to get under the limit.",
-        evidence
+        evidence: evidence2
       }
     ];
   }
@@ -13787,7 +14638,7 @@ function sizeValidator(bundle, rule) {
           bundle.totalBytes
         )}. Networks that measure the uncompressed initial load (e.g. Amazon) may still reject it.`,
         suggestion: "Reduce raw asset weight, not just the zip, to stay safe everywhere.",
-        evidence
+        evidence: evidence2
       }
     ];
   }
@@ -13797,7 +14648,7 @@ function sizeValidator(bundle, rule) {
       severity: "pass",
       title: "Within size limit",
       detail: `${label} weight is ${formatBytes(measured)}, under the ${formatBytes(limit)} limit for ${rule.label}.`,
-      evidence
+      evidence: evidence2
     }
   ];
 }
@@ -13857,6 +14708,7 @@ function structureValidator(bundle, rule) {
 var VALIDATORS = [
   structureValidator,
   sizeValidator,
+  animationDurationValidator,
   dimensionsValidator,
   requiredTagsValidator,
   clickTagValidator,
