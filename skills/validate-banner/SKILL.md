@@ -75,6 +75,12 @@ non-destructive: it writes a new file and never touches the input.
   auto-detectable — that's expected, not a failure.
 - The external-URL check scans raw text (like Amazon's own validator), so URLs
   inside JSON or script metadata are flagged intentionally.
+- Click behavior checks flag `javascript:` links with `target="_blank"` unless
+  a recognized handler cancels navigation immediately on that element. Non-empty
+  Viewst JSON zone maps with a click URL are rated against the network's click-zone
+  policy; empty maps and tracking-only zones are ignored. Hard-coded
+  `window.open("https://…")` URLs produce a warning. These are static probes, not
+  execution of arbitrary click handlers; verify other runtime patterns manually.
 - The animation-duration check never executes banner code. It measures embedded
   Viewst scene models and literal CSS/SVG timing, catches explicit infinite loops,
   and recognizes common dynamic animation APIs. When the final end time cannot be

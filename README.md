@@ -177,6 +177,10 @@ don't appear in `--list-networks`.
 - **External-URL** scanning reads **raw text** (Amazon's own validator is a grep, not a
   runtime check), so URLs inside JSON or script metadata are flagged intentionally.
 
+- **Click behavior** checks catch `javascript:` links that open blank tabs, assess
+  Viewst click zones against each network's policy, and warn about hard-coded
+  landing URLs. These checks inspect source without executing click handlers.
+
 ---
 
 ## Provenance & maintenance

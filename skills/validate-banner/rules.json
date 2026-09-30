@@ -17,6 +17,10 @@
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
     },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -47,6 +51,10 @@
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
     },
+    "clickZonePolicy": {
+      "status": "forbidden",
+      "source": "https://support.google.com/google-ads/answer/6335679?hl=en"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -74,6 +82,11 @@
         }
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "clickZonePolicy": {
+      "status": "supported",
+      "mechanism": "a separate click tag for each exit",
+      "source": "https://support.google.com/campaignmanager/answer/3145300?hl=en"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -104,6 +117,11 @@
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
     },
+    "clickZonePolicy": {
+      "status": "candidate",
+      "mechanism": "one click tag or exit per landing page",
+      "source": "https://support.google.com/displayvideo/answer/7128959?hl=en"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -130,6 +148,10 @@
         }
       },
       "suggestion": "Wire the click via Yandex: `document.getElementById(\"bannerClick\").href = yandexHTML5BannerApi.getClickURLNum(1);`"
+    },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -160,6 +182,10 @@
       },
       "suggestion": "Wire the click via Yandex: `document.getElementById(\"bannerClick\").href = yandexHTML5BannerApi.getClickURLNum(1);`"
     },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -189,6 +215,10 @@
       },
       "suggestion": "Use the myTarget click macro `%link1%` as the banner href."
     },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -217,6 +247,10 @@
       },
       "suggestion": "Set the href to the Rambler macro `%clickurl_1%`."
     },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -244,6 +278,10 @@
         }
       },
       "suggestion": "Prefix the href with the GetIntent macro `[[CLICK_PREFIX]]`."
+    },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -275,6 +313,10 @@
       },
       "suggestion": "Set the href to the AdFox macro `%banner.reference_user1%` and target `%banner.target%`."
     },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -304,6 +346,10 @@
         }
       },
       "suggestion": "Use AdRiver: `ar_callLink({ target: \"_blank\" })` in the click handler."
+    },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -335,6 +381,10 @@
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
     },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -365,6 +415,11 @@
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
     },
+    "clickZonePolicy": {
+      "status": "supported",
+      "mechanism": "`clickTag0`, `clickTag1`, … with sas-clicktag; leave the insertion Click URL empty",
+      "source": "https://help.equativ.com/create-direct-insertion-creatives/manage-click-counting"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -391,6 +446,10 @@
         }
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -421,6 +480,10 @@
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
     },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "https://help.adroll.com/hc/en-us/articles/360030386192-Animated-HTML5-Web-Ads-Format-Guidelines (archived copy)"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -450,6 +513,10 @@
       },
       "suggestion": "Open `APPNEXUS.getClickTag()` on click after including the AppNexus HTML5 library."
     },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "https://learn.microsoft.com/en-us/xandr/industry-reference/use-iab-s-html5-clicktag-standard-on-xandr"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -478,6 +545,11 @@
         }
       },
       "suggestion": "Resolve the click via `asxhtml5.getParam(\"clickTag\", \"https://www.advertiser.com\")`."
+    },
+    "clickZonePolicy": {
+      "status": "supported",
+      "mechanism": "extra tags in metadata.json prefixed with `{clickurl}`",
+      "source": "https://help.bidtheatre.com/en/articles/4701905-html5-creatives (archived copy)"
     },
     "specialFiles": [
       {
@@ -512,6 +584,11 @@
       },
       "suggestion": "Read `getParameterByName(\"clickTAG\")` and open it on click."
     },
+    "clickZonePolicy": {
+      "status": "candidate",
+      "mechanism": "`clickTAG + encodeURIComponent(landingUrl)`",
+      "source": "https://help.choozle.com/uploading-and-managing-html5-assets"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -540,6 +617,11 @@
         }
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "clickZonePolicy": {
+      "status": "supported",
+      "mechanism": "named click tags in manifest.json read with `html5.getClickTag(name)`",
+      "source": "https://docs.deltaprojects.com/html5/landing_pages.html"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -570,6 +652,11 @@
       },
       "suggestion": "Read the click macro from the URL via a `getParameterByName(\"clickTag\")` helper rather than hard-coding it."
     },
+    "clickZonePolicy": {
+      "status": "candidate",
+      "mechanism": "`EB.clickthrough(name)` on each clickable element",
+      "source": "https://support.sizmek.com (archived copy)"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -596,6 +683,11 @@
         }
       },
       "suggestion": "Read the click macro from the URL via a `getParameterByName(\"clickTag\")` helper rather than hard-coding it."
+    },
+    "clickZonePolicy": {
+      "status": "supported",
+      "mechanism": "numbered placeholders `#clicktag`, `#clicktag2`, …",
+      "source": "https://www.stroeer.de/en/planning-booking/specifications/online-ads/technical-specifications-for-physical-html5-ad/"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -626,6 +718,11 @@
       },
       "suggestion": "Read `getParameterByName(\"clickTAG\")` (capital TAG) and open it on click."
     },
+    "clickZonePolicy": {
+      "status": "candidate",
+      "mechanism": "`clickTAG + encodeURIComponent(landingUrl)`",
+      "source": "https://www.thetradedesk.com/assets/global/documents/Creative_Specifications-en.pdf"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -655,6 +752,10 @@
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
     },
+    "clickZonePolicy": {
+      "status": "forbidden",
+      "source": "https://emea.adspecs.yahooinc.com/pages/policies-guidelines/html5-guidelines"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -681,6 +782,10 @@
         }
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "https://learn.microsoft.com/en-us/xandr/invest/html5-creative-guidelines-and-specifications"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -712,6 +817,10 @@
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
     },
+    "clickZonePolicy": {
+      "status": "forbidden",
+      "source": "https://help.quantcast.com/docs/faq-creatives"
+    },
     "specialFiles": [],
     "externalUrls": {
       "mode": "allow"
@@ -738,6 +847,10 @@
         }
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -768,6 +881,10 @@
         }
       },
       "suggestion": "Declare a clickTag and open it on click, e.g. `var clickTag = \"https://example.com\";` then `window.open(window.clickTag, \"_blank\")`."
+    },
+    "clickZonePolicy": {
+      "status": "unknown",
+      "source": "Not reviewed (VST-10033)"
     },
     "specialFiles": [],
     "externalUrls": {
@@ -808,6 +925,11 @@
         }
       },
       "suggestion": "Wire the click through the Amazon SDK: `document.getElementById(\"bannerClick\").onclick = SDK.clickThrough;`"
+    },
+    "clickZonePolicy": {
+      "status": "candidate",
+      "mechanism": "`clickTag1`, `clickTag2`, …",
+      "source": "https://advertising.amazon.com/resources/ad-policy/technical-guidelines"
     },
     "specialFiles": [
       {

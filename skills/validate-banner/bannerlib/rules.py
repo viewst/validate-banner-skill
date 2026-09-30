@@ -37,6 +37,7 @@ class NetworkRule:
     require_meta_ad_size: bool
     required_scripts: List[str]
     click: ClickIntegration
+    click_zone_policy: dict  # {"status": ..., "mechanism"?: ..., "source": ...}
     special_files: List[SpecialFile]
     external_urls: dict  # {"mode":"allow"} | {"mode":"whitelist","allow":[...],"sdkRequired":?}
     disable_click_url_change: bool
@@ -77,6 +78,7 @@ def _parse_rule(n: dict) -> NetworkRule:
             suggestion=click["suggestion"],
             signature_str=_signature_str(click["signature"]),
         ),
+        click_zone_policy=n["clickZonePolicy"],
         special_files=[
             SpecialFile(name=sf["name"], required=sf["required"], note=sf.get("note"))
             for sf in n.get("specialFiles", [])

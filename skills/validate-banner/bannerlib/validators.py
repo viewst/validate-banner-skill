@@ -2,6 +2,8 @@
 Ports src/validators/*.ts. Each validator is (bundle, rule) -> List[Check].
 Severity convention: error = the network rejects it; warning = worth a look;
 info = purely informational (never elevates the verdict); pass = satisfied."""
+import json
+import re
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -453,6 +455,144 @@ def click_tag_validator(bundle: BannerBundle, rule: NetworkRule) -> List[Check]:
     )]
 
 
+# ---- click behavior ---------------------------------------------------------
+
+_ANCHOR_RE = re.compile(r"""<a\b(?:[^>"']|"[^"]*"|'[^']*')*>""", re.I)
+_ATTRIBUTE_RE = re.compile(r"""([^\s=<>/"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?""")
+_ACTIVE_ZONES_RE = re.compile(r"\bvar\s+activeZones\s*=\s*(?=\{)")
+_HARDCODED_OPEN_RE = re.compile(r"""window\.open\(\s*["'](https?://[^"']+)["']""", re.I)
+
+_ZONE_SEVERITY = {"forbidden": "error", "supported": "warning", "candidate": "warning", "unknown": "info"}
+
+
+def _attributes(tag: str) -> dict:
+    attrs = {}
+    for match in _ATTRIBUTE_RE.finditer(tag[2:-1]):
+        name = match.group(1).lower()
+        if name not in attrs:
+            attrs[name] = next((value for value in match.groups()[1:] if value is not None), "")
+    return attrs
+
+
+def _element_lookup(element_id: str) -> str:
+    return r"""document\s*\.\s*getElementById\(\s*["']""" + re.escape(element_id) + r"""["']\s*\)"""
+
+
+def _cancels_navigation(attrs: dict, haystack: str) -> bool:
+    if re.search(r"^\s*(?:event\s*\.\s*preventDefault\s*\(\s*\)\s*;|return\s+false\s*;?\s*$)", attrs.get("onclick", "")):
+        return True
+    element_id = attrs.get("id")
+    if not element_id:
+        return False
+    # Match immediate unconditional cancellation on this exact element only.
+    handler = r"function\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*\{\s*\1\s*\.\s*preventDefault\s*\(\s*\)\s*;"
+    return bool(re.search(
+        _element_lookup(element_id)
+        + r"""\s*\.\s*(?:onclick\s*=\s*|addEventListener\(\s*["']click["']\s*,\s*)""" + handler,
+        haystack,
+    ))
+
+
+def _has_click_zones(haystack: str) -> bool:
+    # Viewst serializes the zone map as JSON. Never evaluate runtime expressions.
+    decoder = json.JSONDecoder()
+    for match in _ACTIVE_ZONES_RE.finditer(haystack):
+        try:
+            zones, _ = decoder.raw_decode(haystack, match.end())
+        except ValueError:
+            continue
+        if isinstance(zones, dict) and any(
+            isinstance(zone, dict) and isinstance(zone.get("clickURL"), str) and zone["clickURL"].strip()
+            for zone in zones.values()
+        ):
+            return True
+    return False
+
+
+def _find_javascript_new_tab_anchor(haystack: str) -> Optional[str]:
+    """An <a target="_blank"> whose href is a javascript: URL, set inline or by script."""
+    for tag in _ANCHOR_RE.findall(haystack):
+        attrs = _attributes(tag)
+        if attrs.get("target", "").lower() != "_blank" or _cancels_navigation(attrs, haystack):
+            continue
+        if re.search(r"^\s*javascript:", attrs.get("href", ""), re.I):
+            return tag
+        element_id = attrs.get("id")
+        if not element_id:
+            continue
+        script_href = re.compile(
+            _element_lookup(element_id) + r"""\s*\.\s*href\s*=\s*["']\s*javascript:""",
+        )
+        if script_href.search(haystack):
+            return tag
+    return None
+
+
+def _zone_detail(rule: NetworkRule) -> str:
+    status = rule.click_zone_policy["status"]
+    mechanism = rule.click_zone_policy.get("mechanism")
+    scope = ("Only the zone area is clickable, and only on the scene where the zone is placed. "
+             "Each zone opens its URL directly, bypassing the network click tag.")
+    if status == "forbidden":
+        return f"{rule.label} requires the whole banner to be a single click area. {scope}"
+    if status == "supported":
+        via = f" via {mechanism}" if mechanism else ""
+        return f"{rule.label} accepts separate click areas{via}, so the network can't track these zones. {scope}"
+    if status == "candidate":
+        via = f" ({mechanism})" if mechanism else ""
+        return (f"{rule.label} allows several landing pages{via}, but its spec doesn't say whether "
+                f"separate click areas are accepted. {scope}")
+    return f"No public {rule.label} spec confirms separate click areas. {scope}"
+
+
+def click_behavior_validator(bundle: BannerBundle, rule: NetworkRule) -> List[Check]:
+    """How the banner behaves on click: blank-tab links, click zones, hard-coded URLs."""
+    checks: List[Check] = []
+    haystack = _haystack(bundle)
+
+    anchor = _find_javascript_new_tab_anchor(haystack)
+    if anchor:
+        checks.append(Check(
+            id="click-javascript-new-tab", severity="error",
+            title="Click opens a blank tab",
+            detail=('A link combines a `javascript:` href with `target="_blank"`. Browsers run that script '
+                    "in the new empty tab, where the click tag is undefined, so the click lands on about:blank."),
+            suggestion=('Remove `target="_blank"` from the link, or open the click tag from an `onclick` '
+                        "handler that calls `preventDefault()`."),
+            evidence=re.sub(r"\s+", " ", anchor)[:160],
+        ))
+
+    if _has_click_zones(haystack):
+        policy = rule.click_zone_policy
+        status = policy["status"]
+        mechanism = policy.get("mechanism")
+        checks.append(Check(
+            id="click-zones", severity=_ZONE_SEVERITY[status],
+            title=("Click zones are not allowed on this network" if status == "forbidden"
+                   else "Click zones bypass the click tag"),
+            detail=_zone_detail(rule),
+            suggestion=(
+                "Remove the click zones and use one banner-wide click through the network click tag."
+                if status == "forbidden" or not mechanism
+                else f"Route each zone through {mechanism}, or remove the zones and use one banner-wide click."
+            ),
+            evidence=policy["source"],
+        ))
+
+    hardcoded = _HARDCODED_OPEN_RE.search(haystack)
+    if hardcoded:
+        checks.append(Check(
+            id="click-hardcoded-url", severity="warning",
+            title="Click opens a hard-coded URL",
+            detail=(f"The banner opens a fixed URL instead of the {rule.label} click tag, "
+                    "so the network can't override or count the click."),
+            suggestion=rule.click.suggestion,
+            evidence=hardcoded.group(1),
+        ))
+
+    return checks
+
+
 # ---- external URLs ----------------------------------------------------------
 
 _INERT_HOSTS = {"w3.org", "www.w3.org", "schema.org", "www.schema.org"}
@@ -527,6 +667,7 @@ _VALIDATORS = [
     dimensions_validator,
     required_tags_validator,
     click_tag_validator,
+    click_behavior_validator,
     external_url_validator,
 ]
 

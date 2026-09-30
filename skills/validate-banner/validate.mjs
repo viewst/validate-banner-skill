@@ -13068,6 +13068,86 @@ var ANIMATION_POLICIES = {
     source: "https://help.quantcast.com/v1/docs/creative-specifications-display"
   }
 };
+var UNKNOWN_CLICK_ZONE_POLICY = {
+  status: "unknown",
+  source: "Not reviewed (VST-10033)"
+};
+var CLICK_ZONE_POLICIES = {
+  google_ads: {
+    status: "forbidden",
+    source: "https://support.google.com/google-ads/answer/6335679?hl=en"
+  },
+  quantcast: {
+    status: "forbidden",
+    source: "https://help.quantcast.com/docs/faq-creatives"
+  },
+  yahoo_ad_tech: {
+    status: "forbidden",
+    source: "https://emea.adspecs.yahooinc.com/pages/policies-guidelines/html5-guidelines"
+  },
+  google_campaign_manager: {
+    status: "supported",
+    mechanism: "a separate click tag for each exit",
+    source: "https://support.google.com/campaignmanager/answer/3145300?hl=en"
+  },
+  smartadserver: {
+    status: "supported",
+    mechanism: "`clickTag0`, `clickTag1`, \u2026 with sas-clicktag; leave the insertion Click URL empty",
+    source: "https://help.equativ.com/create-direct-insertion-creatives/manage-click-counting"
+  },
+  delta_projects: {
+    status: "supported",
+    mechanism: "named click tags in manifest.json read with `html5.getClickTag(name)`",
+    source: "https://docs.deltaprojects.com/html5/landing_pages.html"
+  },
+  stroer: {
+    status: "supported",
+    mechanism: "numbered placeholders `#clicktag`, `#clicktag2`, \u2026",
+    source: "https://www.stroeer.de/en/planning-booking/specifications/online-ads/technical-specifications-for-physical-html5-ad/"
+  },
+  bidtheatre: {
+    status: "supported",
+    mechanism: "extra tags in metadata.json prefixed with `{clickurl}`",
+    source: "https://help.bidtheatre.com/en/articles/4701905-html5-creatives (archived copy)"
+  },
+  trade_desk: {
+    status: "candidate",
+    mechanism: "`clickTAG + encodeURIComponent(landingUrl)`",
+    source: "https://www.thetradedesk.com/assets/global/documents/Creative_Specifications-en.pdf"
+  },
+  choozle: {
+    status: "candidate",
+    mechanism: "`clickTAG + encodeURIComponent(landingUrl)`",
+    source: "https://help.choozle.com/uploading-and-managing-html5-assets"
+  },
+  google_video_360: {
+    status: "candidate",
+    mechanism: "one click tag or exit per landing page",
+    source: "https://support.google.com/displayvideo/answer/7128959?hl=en"
+  },
+  amazon_2dsp: {
+    status: "candidate",
+    mechanism: "`clickTag1`, `clickTag2`, \u2026",
+    source: "https://advertising.amazon.com/resources/ad-policy/technical-guidelines"
+  },
+  sizmek: {
+    status: "candidate",
+    mechanism: "`EB.clickthrough(name)` on each clickable element",
+    source: "https://support.sizmek.com (archived copy)"
+  },
+  adroll: {
+    status: "unknown",
+    source: "https://help.adroll.com/hc/en-us/articles/360030386192-Animated-HTML5-Web-Ads-Format-Guidelines (archived copy)"
+  },
+  xandr: {
+    status: "unknown",
+    source: "https://learn.microsoft.com/en-us/xandr/industry-reference/use-iab-s-html5-clicktag-standard-on-xandr"
+  },
+  xandr_invest: {
+    status: "unknown",
+    source: "https://learn.microsoft.com/en-us/xandr/invest/html5-creative-guidelines-and-specifications"
+  }
+};
 var AMAZON_WHITELIST = [
   "adkit-advertising.amazon",
   // required Amazon DSP SDK loader
@@ -13103,6 +13183,7 @@ function standardNetwork(partial) {
     requireMetaAdSize: true,
     requiredScripts: [],
     click: STANDARD_CLICK,
+    clickZonePolicy: CLICK_ZONE_POLICIES[partial.id] ?? UNKNOWN_CLICK_ZONE_POLICY,
     specialFiles: [],
     externalUrls: allowExternal,
     disableClickUrlChange: false,
@@ -14430,6 +14511,137 @@ function animationDurationValidator(bundle, rule) {
   ];
 }
 
+// src/validators/clickBehavior.ts
+var ANCHOR_RE = /<a\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+var ATTRIBUTE_RE = /([^\s=<>/"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+var ACTIVE_ZONES_RE = /\bvar\s+activeZones\s*=\s*(?=\{)/g;
+var HARDCODED_OPEN_RE = /window\.open\(\s*["'](https?:\/\/[^"']+)["']/i;
+var ZONE_SEVERITY = {
+  forbidden: "error",
+  supported: "warning",
+  candidate: "warning",
+  unknown: "info"
+};
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function attributes(tag) {
+  const attrs = /* @__PURE__ */ new Map();
+  for (const match of tag.slice(2, -1).matchAll(ATTRIBUTE_RE)) {
+    const name = match[1].toLowerCase();
+    if (!attrs.has(name)) attrs.set(name, match[2] ?? match[3] ?? match[4] ?? "");
+  }
+  return attrs;
+}
+function elementLookup(id) {
+  return `document\\s*\\.\\s*getElementById\\(\\s*["']${escapeRegExp(id)}["']\\s*\\)`;
+}
+function cancelsNavigation(attrs, haystack) {
+  if (/^\s*(?:event\s*\.\s*preventDefault\s*\(\s*\)\s*;|return\s+false\s*;?\s*$)/.test(attrs.get("onclick") ?? "")) {
+    return true;
+  }
+  const id = attrs.get("id");
+  if (!id) return false;
+  const handler = String.raw`function\s*\(\s*([A-Za-z_$][\w$]*)\s*\)\s*\{\s*\1\s*\.\s*preventDefault\s*\(\s*\)\s*;`;
+  return new RegExp(
+    `${elementLookup(id)}\\s*\\.\\s*(?:onclick\\s*=\\s*|addEventListener\\(\\s*["']click["']\\s*,\\s*)${handler}`
+  ).test(haystack);
+}
+function hasClickZones(haystack) {
+  for (const match of haystack.matchAll(ACTIVE_ZONES_RE)) {
+    const start = match.index + match[0].length;
+    let depth2 = 0;
+    let quoted = false;
+    let escaped = false;
+    for (let i = start; i < haystack.length; i++) {
+      const ch = haystack[i];
+      if (quoted) {
+        if (escaped) escaped = false;
+        else if (ch === "\\") escaped = true;
+        else if (ch === '"') quoted = false;
+      } else if (ch === '"') quoted = true;
+      else if (ch === "{") depth2++;
+      else if (ch === "}" && --depth2 === 0) {
+        try {
+          const zones = JSON.parse(haystack.slice(start, i + 1));
+          if (zones && typeof zones === "object" && Object.values(zones).some(
+            (zone) => zone && typeof zone.clickURL === "string" && zone.clickURL.trim().length > 0
+          )) return true;
+        } catch {
+        }
+        break;
+      }
+    }
+  }
+  return false;
+}
+function findJavascriptNewTabAnchor(haystack) {
+  for (const tag of haystack.match(ANCHOR_RE) ?? []) {
+    const attrs = attributes(tag);
+    if (attrs.get("target")?.toLowerCase() !== "_blank" || cancelsNavigation(attrs, haystack)) continue;
+    if (/^\s*javascript:/i.test(attrs.get("href") ?? "")) return tag;
+    const id = attrs.get("id");
+    if (!id) continue;
+    const scriptHref = new RegExp(
+      `${elementLookup(id)}\\s*\\.\\s*href\\s*=\\s*["']\\s*javascript:`
+    );
+    if (scriptHref.test(haystack)) return tag;
+  }
+  return void 0;
+}
+function zoneDetail(rule) {
+  const { status, mechanism } = rule.clickZonePolicy;
+  const scope = "Only the zone area is clickable, and only on the scene where the zone is placed. Each zone opens its URL directly, bypassing the network click tag.";
+  switch (status) {
+    case "forbidden":
+      return `${rule.label} requires the whole banner to be a single click area. ${scope}`;
+    case "supported":
+      return `${rule.label} accepts separate click areas${mechanism ? ` via ${mechanism}` : ""}, so the network can't track these zones. ${scope}`;
+    case "candidate":
+      return `${rule.label} allows several landing pages${mechanism ? ` (${mechanism})` : ""}, but its spec doesn't say whether separate click areas are accepted. ${scope}`;
+    case "unknown":
+      return `No public ${rule.label} spec confirms separate click areas. ${scope}`;
+  }
+}
+function clickBehaviorValidator(bundle, rule) {
+  const checks = [];
+  const haystack = allText(bundle).map((f) => f.text).join("\n");
+  const anchor = findJavascriptNewTabAnchor(haystack);
+  if (anchor) {
+    checks.push({
+      id: "click-javascript-new-tab",
+      severity: "error",
+      title: "Click opens a blank tab",
+      detail: 'A link combines a `javascript:` href with `target="_blank"`. Browsers run that script in the new empty tab, where the click tag is undefined, so the click lands on about:blank.',
+      suggestion: 'Remove `target="_blank"` from the link, or open the click tag from an `onclick` handler that calls `preventDefault()`.',
+      evidence: anchor.replace(/\s+/g, " ").slice(0, 160)
+    });
+  }
+  if (hasClickZones(haystack)) {
+    const { status, mechanism, source } = rule.clickZonePolicy;
+    checks.push({
+      id: "click-zones",
+      severity: ZONE_SEVERITY[status],
+      title: status === "forbidden" ? "Click zones are not allowed on this network" : "Click zones bypass the click tag",
+      detail: zoneDetail(rule),
+      suggestion: status === "forbidden" || !mechanism ? "Remove the click zones and use one banner-wide click through the network click tag." : `Route each zone through ${mechanism}, or remove the zones and use one banner-wide click.`,
+      evidence: source
+    });
+  }
+  const hardcoded = HARDCODED_OPEN_RE.exec(haystack);
+  if (hardcoded) {
+    checks.push({
+      id: "click-hardcoded-url",
+      severity: "warning",
+      title: "Click opens a hard-coded URL",
+      detail: `The banner opens a fixed URL instead of the ${rule.label} click tag, so the network can't override or count the click.`,
+      suggestion: rule.click.suggestion,
+      evidence: hardcoded[1]
+    });
+  }
+  return checks;
+}
+
 // src/validators/clickTag.ts
 var FAMILY_LABEL = {
   standard: "standard clickTag",
@@ -14712,6 +14924,7 @@ var VALIDATORS = [
   dimensionsValidator,
   requiredTagsValidator,
   clickTagValidator,
+  clickBehaviorValidator,
   externalUrlValidator
 ];
 function worst(checks) {
@@ -14993,7 +15206,7 @@ var invokedAsScript = process2.argv[1] != null && import.meta.url === pathToFile
 if (invokedAsScript) {
   const { exitCode, output } = await runCli(process2.argv.slice(2));
   (exitCode === 2 ? console.error : console.log)(output);
-  process2.exit(exitCode);
+  process2.exitCode = exitCode;
 }
 export {
   runCli
