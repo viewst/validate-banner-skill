@@ -11,7 +11,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -45,7 +45,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -77,7 +77,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -111,7 +111,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -375,7 +375,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -409,7 +409,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -441,7 +441,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -474,7 +474,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -507,7 +507,7 @@
       "family": "sdk",
       "signature": {
         "__regex__": {
-          "source": "APPNEXUS\\.getClickTag\\s*\\(|var\\s+clickTag\\s*=",
+          "source": "APPNEXUS\\.getClickTag\\s*\\(|(?<![?&\\w])clickTag\\s*=(?!=)",
           "flags": "i"
         }
       },
@@ -612,7 +612,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -746,7 +746,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -777,7 +777,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -811,7 +811,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -842,7 +842,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },
@@ -876,7 +876,7 @@
       "family": "standard",
       "signature": {
         "__regex__": {
-          "source": "var\\s+clickTag\\s*=|window\\.clickTag",
+          "source": "(?<![?&\\w])clickTag\\s*=(?!=)|window\\.clickTag",
           "flags": "i"
         }
       },

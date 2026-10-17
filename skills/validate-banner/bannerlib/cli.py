@@ -5,6 +5,8 @@ import json
 import os
 import re
 import sys
+import zipfile
+import zlib
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -14,10 +16,11 @@ from .fixes import (
     apply_external_url_fix,
     compress_to_fit,
     has_compressible_images,
+    is_safe_archive_path,
     pack_zip,
 )
 from .format import format_bytes
-from .inputs import bundle_from_file_bytes, bundle_from_zip_bytes, detect_network
+from .inputs import ZipLimitError, bundle_from_file_bytes, bundle_from_zip_bytes, detect_network
 from .rules import NetworkRule, get_network, visible_networks
 from .validators import Check, ValidationReport, validate
 
@@ -101,7 +104,14 @@ def load_bundle(path: str) -> BannerBundle:
     except OSError:
         raise ValueError(f"Cannot read file: {path}")
     if ext == ".zip":
-        return bundle_from_zip_bytes(raw, len(raw))
+        try:
+            return bundle_from_zip_bytes(raw, len(raw))
+        except ZipLimitError:
+            raise
+        except (zipfile.BadZipFile, zlib.error, EOFError, NotImplementedError, RuntimeError, ValueError):
+            # Corrupt/truncated/encrypted archives are I/O errors (exit 2), never
+            # a traceback + exit 1 ("banner has errors").
+            raise ValueError(f"Not a valid ZIP archive: {path}")
     return bundle_from_file_bytes(os.path.basename(path), raw)
 
 
@@ -202,6 +212,16 @@ def _default_fixed_path(input_path: str, source: str) -> str:
     return f"{base}_fixed{ext}"
 
 
+def _is_same_file(a: str, b: str) -> bool:
+    """True when both paths name the same file (same inode, or same resolved path)."""
+    if os.path.realpath(a) == os.path.realpath(b):
+        return True
+    try:
+        return os.path.samefile(a, b)
+    except OSError:
+        return False  # the output doesn't exist yet, so it can't be the input
+
+
 def _write_fixed_bundle(bundle: BannerBundle, out_path: str) -> None:
     if bundle.source == "zip":
         with open(out_path, "wb") as fh:
@@ -215,6 +235,10 @@ def run_fix(args: Args, bundle: BannerBundle, rule: Optional[NetworkRule], detec
     if rule is None:
         why = " (none auto-detected)" if detected is None else ""
         return (2, f"--fix needs a single network{why}. Pass --network <id> (see --list-networks).")
+
+    out_path = args.output or _default_fixed_path(args.path, bundle.source)
+    if _is_same_file(out_path, args.path):
+        return (2, f'Refusing to overwrite the input file "{args.path}" — pass a different --output path.')
 
     before = validate(bundle, rule)
     fixed = bundle
@@ -259,7 +283,10 @@ def run_fix(args: Args, bundle: BannerBundle, rule: Optional[NetworkRule], detec
             f"Nothing to auto-fix for {rule.label} — no fixable external-URL or size errors.",
         )
 
-    out_path = args.output or _default_fixed_path(args.path, fixed.source)
+    unsafe = [f for f in fixed.files if not is_safe_archive_path(f.path)] if fixed.source == "zip" else []
+    if unsafe:
+        notes.append(f"Dropped {len(unsafe)} entry path(s) that would escape the archive root.")
+
     try:
         _write_fixed_bundle(fixed, out_path)
     except Exception as e:

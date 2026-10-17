@@ -9,6 +9,32 @@ from .bundle import BannerBundle, BannerFile, build_bundle, is_text_path
 from .rules import visible_networks
 
 
+# Zip-bomb guard (port of src/lib/input/zipLimits.ts — keep limits + messages in
+# sync). Checked against the central directory before any entry is inflated;
+# zipfile never inflates past an entry's declared file_size (it fails the CRC).
+MAX_ZIP_ENTRIES = 2000
+MAX_ZIP_ENTRY_BYTES = 20 * 1024 * 1024
+MAX_ZIP_TOTAL_BYTES = 50 * 1024 * 1024
+
+
+class ZipLimitError(ValueError):
+    pass
+
+
+def assert_zip_within_limits(uncompressed_sizes: List[int]) -> None:
+    if len(uncompressed_sizes) > MAX_ZIP_ENTRIES:
+        raise ZipLimitError(
+            f"ZIP rejected: more than {MAX_ZIP_ENTRIES} entries — not a plausible banner."
+        )
+    total = 0
+    for size in uncompressed_sizes:
+        if size > MAX_ZIP_ENTRY_BYTES:
+            raise ZipLimitError("ZIP rejected: an entry exceeds 20 MB uncompressed.")
+        total += size
+    if total > MAX_ZIP_TOTAL_BYTES:
+        raise ZipLimitError("ZIP rejected: total uncompressed size exceeds 50 MB.")
+
+
 def _is_junk(path: str) -> bool:
     return (
         path.startswith("__MACOSX/")
@@ -27,6 +53,7 @@ def bundle_from_zip_bytes(data: bytes, zipped_bytes: int) -> BannerBundle:
     """Parse raw .zip bytes into a normalized BannerBundle."""
     files: List[BannerFile] = []
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        assert_zip_within_limits([i.file_size for i in zf.infolist() if not i.is_dir()])
         for info in zf.infolist():
             if info.is_dir():
                 continue

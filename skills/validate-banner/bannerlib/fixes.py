@@ -12,7 +12,7 @@ from dataclasses import dataclass, replace
 from typing import Callable, List, Optional
 
 from .bundle import BannerBundle, BannerFile, build_bundle, ext_of
-from .htmlprobe import host_of
+from .htmlprobe import EXTERNAL_URL_RE, host_of, normalize_url
 from .rules import NetworkRule
 
 try:  # Pillow is optional — only the compress-to-fit step uses it.
@@ -26,8 +26,6 @@ except Exception:  # pragma: no cover - environment dependent
 # ---- external-URL strip -----------------------------------------------------
 
 _INERT_HOSTS = {"w3.org", "www.w3.org", "schema.org", "www.schema.org"}
-_URL_RE = re.compile(r"""https?://[^\s"'`)<>\\]+""", re.I)
-_TRAILING_PUNCT_RE = re.compile(r"[.,;]+$")
 
 
 def _host_matches(host: str, entry: str) -> bool:
@@ -75,7 +73,7 @@ def apply_external_url_fix(bundle: BannerBundle, rule: NetworkRule) -> FixResult
         def repl(m, _changed=lambda: None):
             nonlocal changed
             match = m.group(0)
-            url = _TRAILING_PUNCT_RE.sub("", match)
+            url = normalize_url(match)
             verdict = classify(url)
             if verdict == "strip":
                 removed[url] = True
@@ -85,7 +83,7 @@ def apply_external_url_fix(bundle: BannerBundle, rule: NetworkRule) -> FixResult
                 kept[url] = True
             return match
 
-        next_text = _URL_RE.sub(repl, f.text)
+        next_text = EXTERNAL_URL_RE.sub(repl, f.text)
         if not changed:
             files.append(f)
             continue
@@ -102,12 +100,24 @@ def apply_external_url_fix(bundle: BannerBundle, rule: NetworkRule) -> FixResult
 
 # ---- zip repack -------------------------------------------------------------
 
+def is_safe_archive_path(path: str) -> bool:
+    """False for names that would escape the extraction root on unzip ("zip
+    slip"): absolute paths, drive letters, or any `..` segment. Port of pack.ts."""
+    p = path.replace("\\", "/")
+    if p.startswith("/") or re.match(r"^[A-Za-z]:", p):
+        return False
+    return ".." not in p.split("/")
+
+
 def pack_zip(bundle: BannerBundle) -> bytes:
     """Repack a bundle into .zip bytes. Uses DEFLATE (stdlib zlib) — more faithful
-    to how networks weigh real uploads than the Node tool's STORE default."""
+    to how networks weigh real uploads than the Node tool's STORE default.
+    Entries failing is_safe_archive_path are dropped, never repacked."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for f in bundle.files:
+            if not is_safe_archive_path(f.path):
+                continue
             if f.is_text and isinstance(f.text, str):
                 zf.writestr(f.path, f.text)
             elif f.data is not None:

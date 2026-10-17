@@ -324,10 +324,11 @@ def _resolve_dimensions(bundle: BannerBundle):
     from_meta = parse_ad_size(bundle.entry_html)
     if from_meta:
         return from_meta, "meta"
-    for name in [bundle.entry_path, *[f.path for f in bundle.files]]:
-        from_name = dimensions_from_name(name)
-        if from_name:
-            return from_name, "filename"
+    # Only the entry's own path: asset names like `img/bg_728x90.png` say nothing
+    # about the banner's size.
+    from_name = dimensions_from_name(bundle.entry_path)
+    if from_name:
+        return from_name, "filename"
     from_css = dimensions_from_css(bundle.entry_html)
     if from_css:
         return from_css, "css"

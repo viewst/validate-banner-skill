@@ -2288,8 +2288,8 @@ var require_lib2 = __commonJS({
         return this;
       }
       var p = this.constructor;
-      return this.then(resolve2, reject2);
-      function resolve2(value) {
+      return this.then(resolve3, reject2);
+      function resolve3(value) {
         function yes() {
           return value;
         }
@@ -2442,8 +2442,8 @@ var require_lib2 = __commonJS({
       }
       return out;
     }
-    Promise2.resolve = resolve;
-    function resolve(value) {
+    Promise2.resolve = resolve2;
+    function resolve2(value) {
       if (value instanceof this) {
         return value;
       }
@@ -2974,10 +2974,10 @@ var require_utils = __commonJS({
       var promise = external.Promise.resolve(inputData).then(function(data) {
         var isBlob = support.blob && (data instanceof Blob || ["[object File]", "[object Blob]"].indexOf(Object.prototype.toString.call(data)) !== -1);
         if (isBlob && typeof FileReader !== "undefined") {
-          return new external.Promise(function(resolve, reject) {
+          return new external.Promise(function(resolve2, reject) {
             var reader = new FileReader();
             reader.onload = function(e) {
-              resolve(e.target.result);
+              resolve2(e.target.result);
             };
             reader.onerror = function(e) {
               reject(e.target.error);
@@ -3532,7 +3532,7 @@ var require_StreamHelper = __commonJS({
       }
     }
     function accumulate(helper, updateCallback) {
-      return new external.Promise(function(resolve, reject) {
+      return new external.Promise(function(resolve2, reject) {
         var dataArray = [];
         var chunkType = helper._internalType, resultType = helper._outputType, mimeType = helper._mimeType;
         helper.on("data", function(data, meta) {
@@ -3546,7 +3546,7 @@ var require_StreamHelper = __commonJS({
         }).on("end", function() {
           try {
             var result = transformZipOutput(resultType, concat(chunkType, dataArray), mimeType);
-            resolve(result);
+            resolve2(result);
           } catch (e) {
             reject(e);
           }
@@ -9636,7 +9636,7 @@ var require_load = __commonJS({
     var Crc32Probe = require_Crc32Probe();
     var nodejsUtils = require_nodejsUtils();
     function checkEntryCRC32(zipEntry) {
-      return new external.Promise(function(resolve, reject) {
+      return new external.Promise(function(resolve2, reject) {
         var worker = zipEntry.decompressed.getContentWorker().pipe(new Crc32Probe());
         worker.on("error", function(e) {
           reject(e);
@@ -9644,7 +9644,7 @@ var require_load = __commonJS({
           if (worker.streamInfo.crc32 !== zipEntry.decompressed.crc32) {
             reject(new Error("Corrupted zip : CRC32 mismatch"));
           } else {
-            resolve();
+            resolve2();
           }
         }).resume();
       });
@@ -12883,8 +12883,8 @@ var require_jpeg_js = __commonJS({
 });
 
 // src/cli/validate.ts
-import { readFile, writeFile } from "node:fs/promises";
-import { basename, extname } from "node:path";
+import { readFile, stat, writeFile } from "node:fs/promises";
+import { basename, extname, resolve } from "node:path";
 import process2 from "node:process";
 import { pathToFileURL } from "node:url";
 
@@ -12967,9 +12967,16 @@ function buildBundle(source, files, zippedBytes) {
     warnings
   };
 }
+function dirOf(path) {
+  const norm = path.replace(/\\/g, "/");
+  return norm.slice(0, norm.lastIndexOf("/") + 1);
+}
 function findByName(bundle, name) {
   const target = name.toLowerCase();
-  return bundle.files.find((f) => baseName(f.path).toLowerCase() === target);
+  const dirs = /* @__PURE__ */ new Set([dirOf(bundle.entryPath), ""]);
+  return bundle.files.find(
+    (f) => baseName(f.path).toLowerCase() === target && dirs.has(dirOf(f.path))
+  );
 }
 function allText(bundle) {
   return bundle.files.flatMap(
@@ -13160,7 +13167,9 @@ var AMAZON_WHITELIST = [
 var AMAZON_SDK_SRC = "adkit-advertising.amazon/sdk/SDKLoader.js";
 var STANDARD_CLICK = {
   family: "standard",
-  signature: /var\s+clickTag\s*=|window\.clickTag/i,
+  // Any assignment (var/let/const/bare/window.) — but not `==` comparisons or a
+  // `?clickTag=` query string in a URL.
+  signature: /(?<![?&\w])clickTag\s*=(?!=)|window\.clickTag/i,
   suggestion: 'Declare a clickTag and open it on click, e.g. `var clickTag = "https://example.com";` then `window.open(window.clickTag, "_blank")`.'
 };
 var QUERYPARAM_CLICK = {
@@ -13323,7 +13332,7 @@ var NETWORKS = [
     requiredScripts: ["acdn.adnxs.com/html5-lib/1.3.0/appnexus-html5-lib.min.js"],
     click: {
       family: "sdk",
-      signature: /APPNEXUS\.getClickTag\s*\(|var\s+clickTag\s*=/i,
+      signature: /APPNEXUS\.getClickTag\s*\(|(?<![?&\w])clickTag\s*=(?!=)/i,
       suggestion: "Open `APPNEXUS.getClickTag()` on click after including the AppNexus HTML5 library."
     }
   }),
@@ -13480,26 +13489,89 @@ function bundleFromFileBytes(name, raw) {
 
 // src/lib/input/zipAdapter.ts
 var import_jszip = __toESM(require_lib3(), 1);
+
+// src/lib/input/zipLimits.ts
+var MAX_ZIP_ENTRIES = 2e3;
+var MAX_ZIP_ENTRY_BYTES = 20 * 1024 * 1024;
+var MAX_ZIP_TOTAL_BYTES = 50 * 1024 * 1024;
+var ZipLimitError = class extends Error {
+  name = "ZipLimitError";
+};
+function assertZipWithinLimits(uncompressedSizes) {
+  if (uncompressedSizes.length > MAX_ZIP_ENTRIES) {
+    throw new ZipLimitError(
+      `ZIP rejected: more than ${MAX_ZIP_ENTRIES} entries \u2014 not a plausible banner.`
+    );
+  }
+  let total = 0;
+  for (const size of uncompressedSizes) {
+    if (size > MAX_ZIP_ENTRY_BYTES) {
+      throw new ZipLimitError("ZIP rejected: an entry exceeds 20 MB uncompressed.");
+    }
+    total += size;
+  }
+  if (total > MAX_ZIP_TOTAL_BYTES) {
+    throw new ZipLimitError("ZIP rejected: total uncompressed size exceeds 50 MB.");
+  }
+}
+
+// src/lib/input/zipAdapter.ts
 var JUNK = (path) => path.startsWith("__MACOSX/") || path.endsWith("/.DS_Store") || path.endsWith(".DS_Store") || path.includes("/.git/");
+function declaredSize(entry) {
+  const size = entry._data?.uncompressedSize;
+  if (typeof size !== "number" || !Number.isFinite(size) || size < 0) {
+    throw new ZipLimitError("ZIP rejected: entry sizes could not be read.");
+  }
+  return size;
+}
+function inflateCapped(entry, limit) {
+  return new Promise((resolve2, reject) => {
+    const chunks = [];
+    let total = 0;
+    const stream = entry.internalStream("uint8array");
+    stream.on("data", (chunk) => {
+      total += chunk.byteLength;
+      if (total > limit) {
+        stream.pause();
+        reject(new ZipLimitError("ZIP rejected: an entry inflates past its declared size or the size caps."));
+        return;
+      }
+      chunks.push(chunk);
+    }).on("error", reject).on("end", () => {
+      const out = new Uint8Array(total);
+      let offset = 0;
+      for (const c of chunks) {
+        out.set(c, offset);
+        offset += c.byteLength;
+      }
+      resolve2(out);
+    }).resume();
+  });
+}
 async function bundleFromZipBytes(data, zippedBytes) {
   const zip = await import_jszip.default.loadAsync(data);
+  assertZipWithinLimits(
+    Object.values(zip.files).filter((entry) => !entry.dir).map(declaredSize)
+  );
   const entries = Object.values(zip.files).filter(
     (entry) => !entry.dir && !JUNK(entry.name.replace(/\\/g, "/"))
   );
-  const files = await Promise.all(
-    entries.map(async (entry) => {
-      const path = entry.name.replace(/\\/g, "/");
-      const bytes = await entry.async("arraybuffer");
-      const isText = isTextPath(path);
-      return {
-        path,
-        bytes: bytes.byteLength,
-        isText,
-        text: isText ? new TextDecoder("utf-8").decode(bytes) : void 0,
-        blob: new Blob([bytes])
-      };
-    })
-  );
+  const files = [];
+  let remaining = MAX_ZIP_TOTAL_BYTES;
+  for (const entry of entries) {
+    const path = entry.name.replace(/\\/g, "/");
+    const limit = Math.min(declaredSize(entry), MAX_ZIP_ENTRY_BYTES, remaining);
+    const bytes = await inflateCapped(entry, limit);
+    remaining -= bytes.byteLength;
+    const isText = isTextPath(path);
+    files.push({
+      path,
+      bytes: bytes.byteLength,
+      isText,
+      text: isText ? new TextDecoder("utf-8").decode(bytes) : void 0,
+      blob: new Blob([bytes])
+    });
+  }
   return buildBundle("zip", files, zippedBytes);
 }
 
@@ -13518,21 +13590,29 @@ function hasBannerClick(html) {
   return /id=["']bannerClick["']/i.test(html);
 }
 function dimensionsFromCss(html) {
-  const w = /width\s*:\s*(\d{2,4})px/i.exec(html);
-  const h = /height\s*:\s*(\d{2,4})px/i.exec(html);
+  const w = /(?<![-\w])width\s*:\s*(\d{2,4})px/i.exec(html);
+  const h = /(?<![-\w])height\s*:\s*(\d{2,4})px/i.exec(html);
   return w && h ? { width: Number(w[1]), height: Number(h[1]) } : null;
 }
 function dimensionsFromName(name) {
   const m = /(\d{2,4})\s*[xX×]\s*(\d{2,4})/.exec(name);
   return m ? { width: Number(m[1]), height: Number(m[2]) } : null;
 }
+var SLASHES = String.raw`(?:\/\/|\\\/\\\/)`;
+var DOTTED_HOST = String.raw`[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}`;
+var EXTERNAL_URL_RE = new RegExp(
+  String.raw`(?:https?:${SLASHES}|(?<=["'(=])${SLASHES}(?=${DOTTED_HOST}(?:[\/?#:"'\s)\\]|$)))` + String.raw`(?:[^\s"'\`)<>\\]|\\\/)+`,
+  "gi"
+);
+function normalizeUrl(raw) {
+  return raw.replace(/\\\//g, "/").replace(/[.,;]+$/, "");
+}
 function extractUrls(text) {
-  const urls = text.match(/https?:\/\/[^\s"'`)<>\\]+/gi) ?? [];
-  return urls.map((u) => u.replace(/[.,;]+$/, ""));
+  return (text.match(EXTERNAL_URL_RE) ?? []).map(normalizeUrl);
 }
 function hostOf(url) {
   try {
-    return new URL(url).host.toLowerCase();
+    return new URL(url.startsWith("//") ? `https:${url}` : url).host.toLowerCase();
   } catch {
     const m = /^https?:\/\/([^/:?#]+)/i.exec(url);
     return (m?.[1] ?? url).toLowerCase();
@@ -13541,7 +13621,6 @@ function hostOf(url) {
 
 // src/lib/fix/externalUrlFix.ts
 var INERT_HOSTS = /* @__PURE__ */ new Set(["w3.org", "www.w3.org", "schema.org", "www.schema.org"]);
-var URL_RE = /https?:\/\/[^\s"'`)<>\\]+/gi;
 function hostMatches(host, entry) {
   return host === entry || host.endsWith(`.${entry}`);
 }
@@ -13566,8 +13645,8 @@ function applyExternalUrlFix(bundle, rule) {
   const files = bundle.files.map((f) => {
     if (!f.isText || typeof f.text !== "string") return f;
     let changed = false;
-    const next = f.text.replace(URL_RE, (match) => {
-      const url = match.replace(/[.,;]+$/, "");
+    const next = f.text.replace(EXTERNAL_URL_RE, (match) => {
+      const url = normalizeUrl(match);
       const verdict = classify(url);
       if (verdict === "strip") {
         removed.add(url);
@@ -13591,9 +13670,15 @@ function applyExternalUrlFix(bundle, rule) {
 
 // src/lib/fix/pack.ts
 var import_jszip2 = __toESM(require_lib3(), 1);
+function isSafeArchivePath(path) {
+  const p = path.replace(/\\/g, "/");
+  if (p.startsWith("/") || /^[A-Za-z]:/.test(p)) return false;
+  return !p.split("/").includes("..");
+}
 async function packZip(bundle) {
   const zip = new import_jszip2.default();
   for (const f of bundle.files) {
+    if (!isSafeArchivePath(f.path)) continue;
     if (f.isText && typeof f.text === "string") zip.file(f.path, f.text);
     else if (f.blob) zip.file(f.path, new Uint8Array(await f.blob.arrayBuffer()));
   }
@@ -13628,9 +13713,9 @@ function toBlob(canvas, type, quality) {
   if (canvas instanceof OffscreenCanvas) {
     return canvas.convertToBlob({ type, quality });
   }
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     canvas.toBlob(
-      (b) => b ? resolve(b) : reject(new Error("canvas.toBlob returned null")),
+      (b) => b ? resolve2(b) : reject(new Error("canvas.toBlob returned null")),
       type,
       quality
     );
@@ -14670,10 +14755,8 @@ function clickTagValidator(bundle, rule) {
 function resolveDimensions(bundle) {
   const fromMeta = parseAdSize(bundle.entryHtml);
   if (fromMeta) return { size: fromMeta, source: "meta" };
-  for (const name of [bundle.entryPath, ...bundle.files.map((f) => f.path)]) {
-    const fromName = dimensionsFromName(name);
-    if (fromName) return { size: fromName, source: "filename" };
-  }
+  const fromName = dimensionsFromName(bundle.entryPath);
+  if (fromName) return { size: fromName, source: "filename" };
   const fromCss = dimensionsFromCss(bundle.entryHtml);
   if (fromCss) return { size: fromCss, source: "css" };
   return { size: null, source: null };
@@ -14999,7 +15082,14 @@ async function loadBundle(path) {
   } catch {
     throw new Error(`Cannot read file: ${path}`);
   }
-  if (ext === ".zip") return bundleFromZipBytes(raw, raw.byteLength);
+  if (ext === ".zip") {
+    try {
+      return await bundleFromZipBytes(raw, raw.byteLength);
+    } catch (e) {
+      if (e instanceof ZipLimitError) throw e;
+      throw new Error(`Not a valid ZIP archive: ${path}`, { cause: e });
+    }
+  }
   return bundleFromFileBytes(basename(path), raw);
 }
 function matchedMarkers(bundle, rule) {
@@ -15070,6 +15160,15 @@ function defaultFixedPath(input, source) {
   const ext = source === "zip" ? ".zip" : ".html";
   return `${input.replace(/\.(zip|html?|htm)$/i, "")}_fixed${ext}`;
 }
+async function isSameFile(a, b) {
+  if (resolve(a) === resolve(b)) return true;
+  try {
+    const [sa, sb] = await Promise.all([stat(a), stat(b)]);
+    return sa.dev === sb.dev && sa.ino === sb.ino;
+  } catch {
+    return false;
+  }
+}
 async function writeFixedBundle(bundle, outPath) {
   if (bundle.source === "zip") {
     const blob = await packZip(bundle);
@@ -15084,6 +15183,13 @@ async function runFix(args, bundle, rule, detected) {
     return {
       exitCode: 2,
       output: `--fix needs a single network${why}. Pass --network <id> (see --list-networks).`
+    };
+  }
+  const outPath = args.output ?? defaultFixedPath(args.path, bundle.source);
+  if (await isSameFile(outPath, args.path)) {
+    return {
+      exitCode: 2,
+      output: `Refusing to overwrite the input file "${args.path}" \u2014 pass a different --output path.`
     };
   }
   const before = validate(bundle, rule);
@@ -15119,7 +15225,10 @@ async function runFix(args, bundle, rule, detected) {
       output: `Nothing to auto-fix for ${rule.label} \u2014 no fixable external-URL or size errors.`
     };
   }
-  const outPath = args.output ?? defaultFixedPath(args.path, fixed.source);
+  const unsafe = fixed.source === "zip" ? fixed.files.filter((f) => !isSafeArchivePath(f.path)) : [];
+  if (unsafe.length > 0) {
+    notes.push(`Dropped ${unsafe.length} entry path(s) that would escape the archive root.`);
+  }
   try {
     await writeFixedBundle(fixed, outPath);
   } catch (e) {

@@ -96,11 +96,20 @@ def build_bundle(source: str, files: List[BannerFile], zipped_bytes: Optional[in
     )
 
 
+def _dir_of(path: str) -> str:
+    """Directory part of a path, with a trailing slash ("" at the archive root)."""
+    norm = path.replace("\\", "/")
+    return norm[: norm.rfind("/") + 1]
+
+
 def find_by_name(bundle: BannerBundle, name: str) -> Optional[BannerFile]:
-    """Case-insensitive lookup by basename (special-file checks)."""
+    """Case-insensitive lookup of a special file (manifest.json, index.js, …) by
+    basename, next to the entry HTML or at the archive root — a same-named file
+    deep in a vendor folder doesn't count."""
     target = name.lower()
+    dirs = {_dir_of(bundle.entry_path), ""}
     for f in bundle.files:
-        if base_name(f.path).lower() == target:
+        if base_name(f.path).lower() == target and _dir_of(f.path) in dirs:
             return f
     return None
 

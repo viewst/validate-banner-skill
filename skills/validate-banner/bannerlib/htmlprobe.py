@@ -19,14 +19,25 @@ _HEIGHT_RE = re.compile(r"height\s*=\s*(\d+)", re.I)
 _HAS_META_AD_SIZE_RE = re.compile(r"""<meta[^>]*name=["']ad\.size["']""", re.I)
 _HAS_BANNER_CLICK_RE = re.compile(r"""id=["']bannerClick["']""", re.I)
 
-_CSS_WIDTH_RE = re.compile(r"width\s*:\s*(\d{2,4})px", re.I)
-_CSS_HEIGHT_RE = re.compile(r"height\s*:\s*(\d{2,4})px", re.I)
+# Lookbehind keeps `max-width` / `line-height` from matching as the banner size.
+_CSS_WIDTH_RE = re.compile(r"(?<![-\w])width\s*:\s*(\d{2,4})px", re.I)
+_CSS_HEIGHT_RE = re.compile(r"(?<![-\w])height\s*:\s*(\d{2,4})px", re.I)
 _NAME_DIM_RE = re.compile(r"(\d{2,4})\s*[xX×]\s*(\d{2,4})")
 
-# Same URL shape the external-URL scanner / fix use.
-_URL_RE = re.compile(r"""https?://[^\s"'`)<>\\]+""", re.I)
+# An external URL as it appears in raw text: absolute http(s)://…, or
+# protocol-relative //host/… in an attribute/string/url( position (the lookbehind
+# keeps `// comments` out). Either may be JSON-escaped (`\/\/`). Shared by the
+# scanner and the auto-fix. Port of EXTERNAL_URL_RE in src/lib/html.ts.
+_SLASHES = r"(?://|\\/\\/)"
+_DOTTED_HOST = r"[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}"
+EXTERNAL_URL_RE = re.compile(
+    r"(?:https?:" + _SLASHES + r"|(?<=[\"'(=])" + _SLASHES
+    + r"(?=" + _DOTTED_HOST + r"""(?:[/?#:"'\s)\\]|$)))"""
+    + r"""(?:[^\s"'`)<>\\]|\\/)+""",
+    re.I,
+)
 _TRAILING_PUNCT_RE = re.compile(r"[.,;]+$")
-_HOST_RE = re.compile(r"^https?://([^/?#]*)", re.I)
+_HOST_RE = re.compile(r"^(?:https?:)?//([^/?#]*)", re.I)
 
 
 def parse_ad_size(html: str) -> Optional[AdSize]:
@@ -64,9 +75,14 @@ def dimensions_from_name(name: str) -> Optional[AdSize]:
     return None
 
 
+def normalize_url(raw: str) -> str:
+    """Unescape `\\/` and drop trailing sentence punctuation from a raw URL match."""
+    return _TRAILING_PUNCT_RE.sub("", raw.replace("\\/", "/"))
+
+
 def extract_urls(text: str) -> list:
-    """Distinct external http(s) references, trailing punctuation stripped."""
-    return [_TRAILING_PUNCT_RE.sub("", u) for u in _URL_RE.findall(text)]
+    """External references (absolute or protocol-relative), normalized."""
+    return [normalize_url(u) for u in EXTERNAL_URL_RE.findall(text)]
 
 
 def host_of(url: str) -> str:
