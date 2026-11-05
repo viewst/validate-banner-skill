@@ -42,6 +42,7 @@ class NetworkRule:
     external_urls: dict  # {"mode":"allow"} | {"mode":"whitelist","allow":[...],"sdkRequired":?}
     disable_click_url_change: bool
     hidden: bool = False
+    uncompressed_size_limit: bool = False
     notes: Optional[str] = None
 
 
@@ -86,6 +87,7 @@ def _parse_rule(n: dict) -> NetworkRule:
         external_urls=n["externalUrls"],
         disable_click_url_change=n["disableClickUrlChange"],
         hidden=bool(n.get("hidden", False)),
+        uncompressed_size_limit=bool(n.get("uncompressedSizeLimit", False)),
         notes=n.get("notes"),
     )
 

@@ -14924,15 +14924,18 @@ function sizeValidator(bundle, rule) {
     ];
   }
   if (bundle.zippedBytes != null && bundle.totalBytes > limit) {
+    const enforced = rule.uncompressedSizeLimit === true;
     return [
       {
         id: "size",
-        severity: "warning",
-        title: "Uncompressed load exceeds limit",
-        detail: `Packaged at ${formatBytes(measured)} (under ${formatBytes(limit)}), but the uncompressed assets total ${formatBytes(
+        severity: enforced ? "warning" : "info",
+        title: enforced ? "Uncompressed load exceeds limit" : "Uncompressed assets exceed limit",
+        detail: enforced ? `Packaged at ${formatBytes(measured)} (under ${formatBytes(limit)}), but the uncompressed assets total ${formatBytes(
           bundle.totalBytes
-        )}. Networks that measure the uncompressed initial load (e.g. Amazon) may still reject it.`,
-        suggestion: "Reduce raw asset weight, not just the zip, to stay safe everywhere.",
+        )}. ${rule.label} applies the limit to uncompressed assets and may reject it.` : `Packaged at ${formatBytes(measured)}, within the ${formatBytes(limit)} limit for ${rule.label}. The uncompressed assets total ${formatBytes(
+          bundle.totalBytes
+        )}, which ${rule.label} does not limit.`,
+        suggestion: enforced ? "Reduce raw asset weight, not just the zip." : void 0,
         evidence: evidence2
       }
     ];

@@ -124,14 +124,25 @@ def size_validator(bundle: BannerBundle, rule: NetworkRule) -> List[Check]:
         )]
 
     if bundle.zipped_bytes is not None and bundle.total_bytes > limit:
+        enforced = rule.uncompressed_size_limit
+        if enforced:
+            return [Check(
+                id="size", severity="warning", title="Uncompressed load exceeds limit",
+                detail=(
+                    f"Packaged at {format_bytes(measured)} (under {format_bytes(limit)}), but the "
+                    f"uncompressed assets total {format_bytes(bundle.total_bytes)}. {rule.label} "
+                    "applies the limit to uncompressed assets and may reject it."
+                ),
+                suggestion="Reduce raw asset weight, not just the zip.",
+                evidence=evidence,
+            )]
         return [Check(
-            id="size", severity="warning", title="Uncompressed load exceeds limit",
+            id="size", severity="info", title="Uncompressed assets exceed limit",
             detail=(
-                f"Packaged at {format_bytes(measured)} (under {format_bytes(limit)}), but the "
-                f"uncompressed assets total {format_bytes(bundle.total_bytes)}. Networks that measure "
-                "the uncompressed initial load (e.g. Amazon) may still reject it."
+                f"Packaged at {format_bytes(measured)}, within the {format_bytes(limit)} limit for "
+                f"{rule.label}. The uncompressed assets total {format_bytes(bundle.total_bytes)}, "
+                f"which {rule.label} does not limit."
             ),
-            suggestion="Reduce raw asset weight, not just the zip, to stay safe everywhere.",
             evidence=evidence,
         )]
 

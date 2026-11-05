@@ -167,7 +167,8 @@ don't appear in `--list-networks`.
 ## How it decides
 
 - **Size** gates on the **zipped** weight for ZIP uploads (the raw size for a single
-  HTML file); an uncompressed-over-limit case is a separate warning.
+  HTML file). If the zip fits but the uncompressed assets exceed the limit, that is
+  `info` — a `warning` only for networks that limit uncompressed size.
 - **Animation duration** is always surfaced with the selected network's policy.
   Unknown or dynamically generated timing stays informational; only a statically
   explicit overrun or infinite loop raises a warning.
